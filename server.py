@@ -4,19 +4,27 @@ import sys
 
 from socket_utils import recv_content
 
+import HttpRequest
+
 
 class ServerThread(threading.Thread):
-    def __init__(self, s):
+    def __init__(self, s, allow_persistent=True):
         super(ServerThread, self).__init__()
         self.socket = s
+        self.allow_persistent = allow_persistent
 
     def run(self):
         try:
             while True:
                 message = self.socket.recv(2048)
                 if message == b'':
-                    print("Socket {0} closed\n".format(self.socket.getsockname()))
+                    print("Peer {0} closed connection\n".format(self.socket.getpeername()))
                     break
+
+                req = HttpRequest.HttpRequest(message)
+                print("Request from:", self.socket.getpeername())
+                print(str(req.gen_request(), "utf-8"))
+                # TODO: use request
 
                 terminator = b'\r\n'
 
@@ -25,7 +33,7 @@ class ServerThread(threading.Thread):
                 header_list = [h.split(':') for h in header.split('\n')]
                 headers = {h[0]:h[1] for h in header_list if len(h) == 2}
 
-                m = b'Here is some data to send back'
+                m = b'<html><body><h1>Here is some data to send back</h1></body></html>'
 
                 # req = HttpResponse.HttpResponse(self.socket, header)
                 #
@@ -42,8 +50,21 @@ class ServerThread(threading.Thread):
                     print(repr(chunks))
                     m = bytes(str(chunks, 'utf-8').upper(), 'utf-8')
 
-                reply = bytes("Content-Length:{0}\r\n\r\n".format(len(m)), 'utf-8') + m
-                result = self.socket.sendall(reply)
+                if req.uri == '/favicon.ico':
+                    reply = bytes("HTTP/1.1 404 Not found\r\nConnection: close\r\n\r\n", 'utf-8')
+                else:
+                    connection = req.connection if self.allow_persistent else "close"
+                    reply = bytes("HTTP/1.1 200 OK\r\nContent-Length:{0}\r\nConnection: {1}\r\n\r\n".format(len(m), connection), 'utf-8') + m
+
+                print(reply)
+                self.socket.sendall(reply)
+
+                if "keep-alive" not in req.connection.lower() or not self.allow_persistent:
+                    print("Closing connection")
+                    self.socket.shutdown(socket.SHUT_RDWR)
+                    self.socket.close()
+                    break
+
         except ConnectionError as e:
             print(e, file=sys.stderr)
         except OSError as e:
@@ -53,15 +74,20 @@ class ServerThread(threading.Thread):
 class Server:
     def __init__(self, address, port):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind((address, port))
         self.socket.listen(5)
 
     def run(self):
-        while True:
-            clientsocket, clientaddr = self.socket.accept()
-            print("Connected: {0}".format(clientaddr))
-            ct = ServerThread(clientsocket)
-            ct.start()
+        try:
+            while True:
+                clientsocket, clientaddr = self.socket.accept()
+                print("Connected: {0}".format(clientaddr))
+                ct = ServerThread(clientsocket, allow_persistent=True)
+                ct.start()
+
+        except KeyboardInterrupt:
+            self.socket.shutdown(socket.SHUT_RDWR)
 
 
 if __name__ == '__main__':
