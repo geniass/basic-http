@@ -14,7 +14,7 @@ class Client:
     def send(self, message):
         req = HttpRequest.HttpRequest()
         req.host = self.address
-        req.url = '/'
+        req.uri = '/'
         req.user_agent = 'Mozilla/5.0 (X11; Fedora; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.75 Safari/537.36'
         # req = bytes("Content-Length:{0}\r\n".format(len(message)), "utf-8")
         # req += message
