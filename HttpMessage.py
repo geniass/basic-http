@@ -1,13 +1,35 @@
+import re
+
+
 class BadRequestError(Exception):
     def __init__(self):
         super(BadRequestError, self).__init__("Bad request")
         self.code = 400
 
+# regexs used for finding start/status line and extracting its fields
+# uses regex/python named groups
+request_regex = re.compile(u'^(?P<method>[A-Z]+) (?P<uri>/.*) (?P<version>HTTP/\d\.\d)')
+response_regex = re.compile(u'^(?P<version>HTTP/\d\.\d) (?P<code>\d{3}) (?P<reason>.+)')
+
 
 def parse_message(data):
+    """
+    Takes a HTTP message and extracts all fields
+    :param data: HTTP message (request or response) bytearray
+        (eg b'HTTP/1.1 200 OK\r\nContent-Length:4\r\nConnection: keep-alive\r\n\r\nData')
+     :return: dict containing 'header' and 'content' fields. 'header' is a dict containing extracted headers
+    """
     terminator = b'\r\n\r\n'
 
     message = {'header': {}, 'content': ''}
+
+    # HTML message format:
+    # start_line/status_line
+    # header field\r\n
+    # header field\r\n
+    # ...\r\n
+    # \r\n (terminator)
+    # content (optional)
 
     header_end = data.find(terminator)
     if header_end < 0:
@@ -21,23 +43,25 @@ def parse_message(data):
     header = str(data[:header_end], 'utf-8')
     # each header on a new line. Format:     field_name: value
     header_list = header.split('\r\n')
-    # header_list = [h.split(':') for h in header.split('\n')]
 
+    # look for a start/status line
+    # have a look at request_regex and response_regex above for details
     start_line = header_list[0]
-    fields = start_line.split(' ')
-    if len(fields) < 3:
-        # HTTP response requires at least: version, status code, status reason
-        # Request requires method, uri, version
-        raise BadRequestError()
-    if fields[0].startswith('HTTP'):
-        # response message
-        message['header']['http_version'] = fields[0]
-        message['header']['status_code'] = fields[1]
-        message['header']['reason'] = ' '.join(fields[2:])
+    req_match = request_regex.match(start_line)
+    res_match = response_regex.match(start_line)
+    if req_match:
+        # message is a request
+        message['header']['method'] = req_match.group('method')
+        message['header']['uri'] = req_match.group('uri')
+        message['header']['http_version'] = req_match.group('version')
+    elif res_match:
+        # message is a response
+        message['header']['http_version'] = res_match.group('version')
+        message['header']['status_code'] = res_match.group('code')
+        message['header']['reason'] = res_match.group('reason')
     else:
-        message['header']['method'] = fields[0]
-        message['header']['uri'] = fields[1]
-        message['header']['http_version'] = fields[2]
+        # message is badly formed
+        raise BadRequestError()
 
     header_list = [h.split(':') for h in header_list]
     headers = {h[0]: h[1] for h in header_list if len(h) == 2}
@@ -45,5 +69,4 @@ def parse_message(data):
         if k not in message['header']:
             message['header'][k] = v.strip()
 
-    print(message)
     return message
