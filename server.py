@@ -3,7 +3,7 @@ import threading
 import sys
 from pathlib import Path
 
-from socket_utils import recv_content
+from socket_utils import recv_message
 
 import HttpRequest
 import HttpResponse
@@ -44,16 +44,8 @@ class ServerThread(threading.Thread):
     def run(self):
         try:
             while True:
-                message = self.socket.recv(2048)
-                if message == b'':
-                    print("Peer {0} closed connection\n".format(
-                        self.socket.getpeername()))
-                    break
-
-                req = HttpRequest.HttpRequest(message)
-                print("Request from:", self.socket.getpeername())
-                print(str(req.gen_request(), "utf-8"))
-                # TODO: use request
+                req = recv_message(self.socket)
+                print(req.content)
 
                 connection = req.connection if self.allow_persistent else "close"
                 response = HttpResponse.HttpResponse()
@@ -65,13 +57,13 @@ class ServerThread(threading.Thread):
                 elif method == "HEAD":
                     self.handle_head(req, response)
                 elif method == "POST":
-                    pass
+                    response.content = b"You sent a post request!"
                 elif method == "PUT":
                     pass
                 elif method == "DELETE":
                     pass
 
-                print(response.gen_response())
+                # print(response.gen_response())
                 self.socket.sendall(response.gen_response())
 
                 if "keep-alive" not in req.connection.lower() or not self.allow_persistent:

@@ -22,12 +22,13 @@ class HttpRequest:
         self.content_type = 'application/x-www-form-urlencoded'
         # Use content_type = 'multipart/form-data' for file uploads
         self.request = '%40type=issue%26%40action=show%26%40number=12345'
-        self.content_length = len(self.request)
+        self.content_length = 0
+        self.content = b""
 
         if request:
             message = parse_message(request)
             if message['content']:
-                if 'Content-Length' not in message:
+                if 'content-length' not in message:
                     raise BadRequestError()
                 self.content = message['content']
 
@@ -43,6 +44,8 @@ class HttpRequest:
                 self.uri = header['uri']
             if 'http_version' in header:
                 self.http_version = header['http_version']
+            if 'content-length' in header:
+                self.content_length = int(header['content-length'])
             if 'connection' in header:
                 self.connection = header['connection']
             if 'user_agent' in header:

@@ -2,14 +2,17 @@ import re
 
 
 class BadRequestError(Exception):
+
     def __init__(self):
         super(BadRequestError, self).__init__("Bad request")
         self.code = 400
 
 # regexs used for finding start/status line and extracting its fields
 # uses regex/python named groups
-request_regex = re.compile(u'^(?P<method>[A-Z]+) (?P<uri>/.*) (?P<version>HTTP/\d\.\d)')
-response_regex = re.compile(u'^(?P<version>HTTP/\d\.\d) (?P<code>\d{3}) (?P<reason>.+)')
+request_regex = re.compile(
+    u'^(?P<method>[A-Z]+) (?P<uri>/.*) (?P<version>HTTP/\d\.\d)')
+response_regex = re.compile(
+    u'^(?P<version>HTTP/\d\.\d) (?P<code>\d{3}) (?P<reason>.+)')
 
 
 def parse_message(data):
@@ -64,8 +67,8 @@ def parse_message(data):
         raise BadRequestError()
 
     header_list = [h.split(':') for h in header_list]
-    headers = {h[0]: h[1] for h in header_list if len(h) == 2}
-    for k,v in headers.items():
+    headers = {h[0].lower(): h[1] for h in header_list if len(h) == 2}
+    for k, v in headers.items():
         if k not in message['header']:
             message['header'][k] = v.strip()
 
