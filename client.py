@@ -22,10 +22,14 @@ class Client:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((self.host, port))
 
-    def send(self, message):
+    def send(self, message, method):
         req = HttpRequest.HttpRequest()
         req.host = self.host
-        req.url = self.url
+        req.uri = self.url
+        if method == '':
+            req.method = 'GET'
+        else:
+            req.method = method
         req.user_agent = 'Mozilla/5.0 (X11; Fedora; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.75 Safari/537.36'
         # req = bytes("Content-Length:{0}\r\n".format(len(message)), "utf-8")
         # req += message

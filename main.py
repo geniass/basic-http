@@ -13,13 +13,15 @@ def clean_up_address(address):
         address = address[8:]
 
     return address
-a = 1
 
-input_address = input("Please input your desired URL\n")
+redirection_flag = 1
 
-while a == 1:
-    a = 0
+method = input("Please enter your desired HTTP method:\n")
+method = method.upper()
+input_address = input("Please enter your desired web-address:\n")
 
+while redirection_flag == 1:
+    redirection_flag = 0
     input_address = clean_up_address(input_address)
     client = Client(input_address, 80)
 
@@ -27,7 +29,7 @@ while a == 1:
 
     message = ''.join(['a' for c in range(8100)]) + 'b'
     req = bytes(message, "utf-8")
-    client.send(req)
+    client.send(req, method)
     client.socket.shutdown(socket.SHUT_WR)
 
     # client2 = Client("127.0.0.1", 8000)
@@ -44,7 +46,8 @@ while a == 1:
         print("Server closed connection")
     else:
         if (str(reply, 'utf-8').find('302 Found') > 0) or (str(reply, 'utf-8').find('301 Moved Permanently') > 0):
-            a = 1
+            redirection_flag = 1
+            method = 'GET'
             m_second = str(reply, 'utf-8')
             m_third = m_second[(m_second.find('Location')+10):]
             m_third = m_third[:m_third.find('\r\n')]

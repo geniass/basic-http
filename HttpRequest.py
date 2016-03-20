@@ -55,14 +55,14 @@ class HttpRequest:
 
 
         if (self.method == 'GET') or (self.method == 'HEAD') or (self.method == 'DELETE'):
-            req_str = "{0} {1} {2}\r\nHost: {3}\r\nUser-Agent: {4}\r\n".format(self.method, self.url,
+            req_str = "{0} {1} {2}\r\nHost: {3}\r\nUser-Agent: {4}\r\n".format(self.method, self.uri,
                                                                                     self.http_version, self.host,
                                                                                     self.user_agent)
 
         elif (self.method == 'POST') or (self.method == 'PUT'):
             req_str = "{0} {1} {2}\r\nHost: {3}\r\nUser-Agent: {4}\r\nAccept: {5}\r\n," \
                       "Accept-Language: {6}\r\nAccept-Encoding: {7}\r\nContent-Type: {8}\r\nContent-Length: {9}\r\n," \
-                      "Connection: {10}\r\n\n{10}\n".format(self.method, self.url, self.http_version, self.host,
+                      "Connection: {10}\r\n\n{10}\n".format(self.method, self.uri, self.http_version, self.host,
                                                             self.user_agent, self.accept, self.accept_lang,
                                                             self.accept_encoding, self.content_type,
                                                             self.content_length, self.connection, self.request)
