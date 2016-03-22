@@ -5,6 +5,7 @@ import sys
 from socket_utils import recv_content
 
 import HttpRequest
+import HttpResponse
 
 
 class ServerThread(threading.Thread):
@@ -12,6 +13,21 @@ class ServerThread(threading.Thread):
         super(ServerThread, self).__init__()
         self.socket = s
         self.allow_persistent = allow_persistent
+
+    def handle_get(self, request, response):
+        m = b'<html><body><h1>Here is some data to send back</h1></body></html>'
+        if request.uri == '/favicon.ico':
+            response.status_code = 404
+            response.reason = "Not found"
+            response.content = b"Go Away"
+        else:
+            response.content = m
+
+    def handle_head(self, request, response):
+        self.handle_get(request, response)
+        # HEAD should return headers only
+        response.content_length = len(response.content)
+        response.content = b""
 
     def run(self):
         try:
@@ -26,38 +42,24 @@ class ServerThread(threading.Thread):
                 print(str(req.gen_request(), "utf-8"))
                 # TODO: use request
 
-                terminator = b'\r\n'
+                connection = req.connection if self.allow_persistent else "close"
+                response = HttpResponse.HttpResponse()
+                response.connection = connection
 
-                header_end = message.find(terminator)
-                header = str(message[:header_end], 'utf-8')
-                header_list = [h.split(':') for h in header.split('\n')]
-                headers = {h[0]:h[1] for h in header_list if len(h) == 2}
+                method = req.method
+                if method == "GET":
+                    self.handle_get(req, response)
+                elif method == "HEAD":
+                    self.handle_head(req, response)
+                elif method == "POST":
+                    pass
+                elif method == "PUT":
+                    pass
+                elif method == "DELETE":
+                    pass
 
-                m = b'<html><body><h1>Here is some data to send back</h1></body></html>'
-
-                # req = HttpResponse.HttpResponse(self.socket, header)
-                #
-                # if req.data:
-                #     print(repr(req.data))
-                #     m = bytes(str(req.data, 'utf-8').upper(), 'utf-8')
-
-                if 'Content-Length' in headers:
-                    content_length = int(headers['Content-Length'])
-                    chunks = bytearray(message[header_end+len(terminator):])
-                    chunks.extend(recv_content(self.socket, content_length - len(chunks)))
-
-                    print("chunks len", len(chunks))
-                    print(repr(chunks))
-                    m = bytes(str(chunks, 'utf-8').upper(), 'utf-8')
-
-                if req.uri == '/favicon.ico':
-                    reply = bytes("HTTP/1.1 404 Not found\r\nConnection: close\r\n\r\n", 'utf-8')
-                else:
-                    connection = req.connection if self.allow_persistent else "close"
-                    reply = bytes("HTTP/1.1 200 OK\r\nContent-Length:{0}\r\nConnection: {1}\r\n\r\n".format(len(m), connection), 'utf-8') + m
-
-                print(reply)
-                self.socket.sendall(reply)
+                print(response.gen_response())
+                self.socket.sendall(response.gen_response())
 
                 if "keep-alive" not in req.connection.lower() or not self.allow_persistent:
                     print("Closing connection")
