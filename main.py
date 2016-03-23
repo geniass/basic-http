@@ -1,60 +1,52 @@
 from client import Client
 import socket
-
-#server = Server("127.0.0.1", 8000)
-#server.run()
+import sys
 
 # Connect a new client
+try:
+    proxy_addr = input("Please input your proxy server addr:\n")
 
-def clean_up_address(address):
-    if address.startswith("http://"):
-        address = address[7:]
-    elif address.startswith("https://"):
-        address = address[8:]
-
-    return address
-
-redirection_flag = 1
-
-method = input("Please enter your desired HTTP method:\n")
-method = method.upper()
-input_address = input("Please enter your desired web-address:\n")
-
-while redirection_flag == 1:
-    redirection_flag = 0
-    input_address = clean_up_address(input_address)
-    client = Client(input_address, 80)
-
-    print("Connected")
-
-    message = ''.join(['a' for c in range(8100)]) + 'b'
-    req = bytes(message, "utf-8")
-    client.send(req, method)
-    client.socket.shutdown(socket.SHUT_WR)
-
-    # client2 = Client("127.0.0.1", 8000)
-    # client2.send(bytes("client b", 'utf-8'))
-    #
-    # for i in range(10):
-    #     c = Client("127.0.0.1", 8000)
-    #     c.send(bytes("client " + str(i), 'utf-8'))
-    #     c.close()
-
-    reply = client.receive()
-
-    if reply == b'':
-        print("Server closed connection")
+    if proxy_addr == '':
+        proxy_port = 0
     else:
-        if (str(reply, 'utf-8').find('302 Found') > 0) or (str(reply, 'utf-8').find('301 Moved Permanently') > 0):
-            redirection_flag = 1
-            method = 'GET'
-            m_second = str(reply, 'utf-8')
-            m_third = m_second[(m_second.find('Location')+10):]
-            m_third = m_third[:m_third.find('\r\n')]
-            print(m_third)
-            input_address = m_third
+        try:
+            proxy_port = int(input("Please enter your proxy port:\n"))
+        except ValueError:
+            print ("\nPort number entered was not an integer. Please re-try")
+            sys.exit(0)
 
-        print("Server replied: " + str(reply, 'utf-8'))
+    method = input("Please enter your desired HTTP method:\n")
+    method = method.upper()
+    method = method.replace(' ', '')
 
+    input_address = input("Please enter your desired web-address:\n")
+
+    client = Client(input_address, 80, proxy_addr, proxy_port)
+
+except (TimeoutError,ConnectionRefusedError):
+    print ("\nCould not connect to desired proxy server. Please re-check your proxy address and/or port number")
+    sys.exit(0)
+
+print("Connected")
+
+message = ''.join(['a' for c in range(8100)]) + 'b'
+req = bytes(message, "utf-8")
+client.send(req, method)
+
+# client2 = Client("127.0.0.1", 8000)
+# client2.send(bytes("client b", 'utf-8'))
+#
+# for i in range(10):
+#     c = Client("127.0.0.1", 8000)
+#     c.send(bytes("client " + str(i), 'utf-8'))
+#     c.close()
+
+reply = client.receive()
+
+if reply == b'':
+    print("Server closed connection")
+else:
+    print("Server replied: " + str(reply, "ISO-8859-1"))
+
+client.socket.shutdown(socket.SHUT_WR)
 client.close()
-# client2.close()

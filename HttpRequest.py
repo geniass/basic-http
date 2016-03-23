@@ -15,7 +15,7 @@ class HttpRequest:
         self.uri = ''
         self.http_version = 'HTTP/1.1'
         self.connection = 'keep-alive'
-        self.user_agent = 'Mozilla/5.0'
+        self.user_agent = ''
         self.accept_lang = 'en-GB,en;q=0.5'
         self.accept_encoding = 'gzip, deflate'
         self.accept = '/'
@@ -71,9 +71,9 @@ class HttpRequest:
                                                                                self.user_agent)
 
         elif (self.method == 'POST') or (self.method == 'PUT'):
-            req_str = "{0} {1} {2}\r\nHost: {3}\r\nUser-Agent: {4}\r\nAccept: {5}\r\n," \
-                      "Accept-Language: {6}\r\nAccept-Encoding: {7}\r\nContent-Type: {8}\r\nContent-Length: {9}\r\n," \
-                      "Connection: {10}\r\n\n{10}\n".format(self.method, self.uri, self.http_version, self.host,
+            req_str = "{0} {1} {2}\r\nHost: {3}\r\nUser-Agent: {4}\r\nAccept: {5}\r\n" \
+                      "Accept-Language: {6}\r\nAccept-Encoding: {7}\r\nContent-Type: {8}\r\nContent-Length: {9}\r\n" \
+                      "Connection: {10}\r\n\n{11}\n".format(self.method, self.uri, self.http_version, self.host,
                                                             self.user_agent, self.accept, self.accept_lang,
                                                             self.accept_encoding, self.content_type,
                                                             self.content_length, self.connection, self.request)
