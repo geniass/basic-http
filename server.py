@@ -1,6 +1,7 @@
 import socket
 import threading
 import sys
+from pathlib import Path
 
 from socket_utils import recv_content
 
@@ -9,19 +10,30 @@ import HttpResponse
 
 
 class ServerThread(threading.Thread):
-    def __init__(self, s, allow_persistent=True):
+
+    def __init__(self, s, allow_persistent=True, static_dir="./static"):
         super(ServerThread, self).__init__()
         self.socket = s
         self.allow_persistent = allow_persistent
+        self.static_dir = Path(static_dir).resolve()
 
     def handle_get(self, request, response):
-        m = b'<html><body><h1>Here is some data to send back</h1></body></html>'
-        if request.uri == '/favicon.ico':
+        norm_path = Path(str(self.static_dir) + request.uri)
+
+        if request.uri == "/":
+            # redirect / to index.html
+            norm_path = self.static_dir / "index.html"
+        if not norm_path.match(str(self.static_dir) + "/*"):
+            # client tried to access a path outside of static_dir!
+            response.status_code = 403
+            response.reason = "Forbidden. Don't even ty"
+            return
+        elif norm_path.is_file():
+            # send the file
+            response.content = norm_path.open(mode='rb').read()
+        else:
             response.status_code = 404
             response.reason = "Not found"
-            response.content = b"Go Away"
-        else:
-            response.content = m
 
     def handle_head(self, request, response):
         self.handle_get(request, response)
@@ -34,7 +46,8 @@ class ServerThread(threading.Thread):
             while True:
                 message = self.socket.recv(2048)
                 if message == b'':
-                    print("Peer {0} closed connection\n".format(self.socket.getpeername()))
+                    print("Peer {0} closed connection\n".format(
+                        self.socket.getpeername()))
                     break
 
                 req = HttpRequest.HttpRequest(message)
@@ -74,6 +87,7 @@ class ServerThread(threading.Thread):
 
 
 class Server:
+
     def __init__(self, address, port):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
