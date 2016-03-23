@@ -5,8 +5,8 @@ from pathlib import Path
 
 from socket_utils import recv_message
 
-import HttpRequest
 import HttpResponse
+from HttpMessage import BadRequestError
 
 
 class ServerThread(threading.Thread):
@@ -26,7 +26,7 @@ class ServerThread(threading.Thread):
         if not norm_path.match(str(self.static_dir) + "/*"):
             # client tried to access a path outside of static_dir!
             response.status_code = 403
-            response.reason = "Forbidden. Don't even ty"
+            response.reason = "Forbidden. Don't even try"
             return
         elif norm_path.is_file():
             # send the file
@@ -42,10 +42,9 @@ class ServerThread(threading.Thread):
         response.content = b""
 
     def run(self):
-        try:
-            while True:
+        while True:
+            try:
                 req = recv_message(self.socket)
-                print(req.content)
 
                 connection = req.connection if self.allow_persistent else "close"
                 response = HttpResponse.HttpResponse()
@@ -72,10 +71,15 @@ class ServerThread(threading.Thread):
                     self.socket.close()
                     break
 
-        except ConnectionError as e:
-            print(e, file=sys.stderr)
-        except OSError as e:
-            print(e, file=sys.stderr)
+            except BadRequestError:
+                response = HttpResponse.HttpResponse()
+                response.status_code = 400
+                response.reason = "Bad request"
+                self.socket.sendall(response.gen_response())
+            except ConnectionError as e:
+                print(e, file=sys.stderr)
+            except OSError as e:
+                print(e, file=sys.stderr)
 
 
 class Server:
