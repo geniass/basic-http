@@ -21,9 +21,8 @@ class HttpRequest:
         self.accept = '/'
         self.content_type = 'application/x-www-form-urlencoded'
         # Use content_type = 'multipart/form-data' for file uploads
-        self.request = '%40type=issue%26%40action=show%26%40number=12345'
-        self.content_length = 0
-        self.content = b""
+        self.content = b''
+        self.content_length = len(self.content)
 
         if request:
             message = parse_message(request)
@@ -61,34 +60,19 @@ class HttpRequest:
         Uses the data contained in this HttpRequest instance
         :return: Http request message as a bytearray
         """
-        # req_str = "{0} {1} {2}\r\n".format(self.method, self.uri, self.http_version)
-
-        # req_str = "{0} {1} HTTP/{2}\r\nHost: {3}\r\n".format(self.method, self.url, self.http_version, self.host)
+        if self.method: req_str = self.method + ' '
+        if self.uri: req_str += self.uri + ' '
+        if self.http_version: req_str += '{0}\r\n'.format(self.http_version)
+        if self.host: req_str += 'Host: {0}\r\n'.format(self.host)
+        if self.user_agent: req_str += 'User-Agent: {0}\r\n'.format(self.user_agent)
 
         if (self.method == 'GET') or (self.method == 'HEAD') or (self.method == 'DELETE'):
-            req_str = "{0} {1} {2}\r\nHost: {3}\r\nUser-Agent: {4}\r\n".format(self.method, self.uri,
-                                                                               self.http_version, self.host,
-                                                                               self.user_agent)
+            pass
 
-        elif (self.method == 'POST') or (self.method == 'PUT'):
-            req_str = "{0} {1} {2}\r\nHost: {3}\r\nUser-Agent: {4}\r\nAccept: {5}\r\n" \
-                      "Accept-Language: {6}\r\nAccept-Encoding: {7}\r\nContent-Type: {8}\r\nContent-Length: {9}\r\n" \
-                      "Connection: {10}\r\n\n{11}\n".format(self.method, self.uri, self.http_version, self.host,
-                                                            self.user_agent, self.accept, self.accept_lang,
+        if (self.method == 'POST') or (self.method == 'PUT'):
+            req_str += 'Accept: {0}\r\nAccept-Language: {1}\r\nAccept-Encoding: {2}\r\nContent-Type: {3}\r\n' \
+                       'Content-Length: {4}\r\nConnection: {5}\r\n\n{6}\n'.format(self.accept, self.accept_lang,
                                                             self.accept_encoding, self.content_type,
-                                                            self.content_length, self.connection, self.request)
+                                                            self.content_length, self.connection, self.content)
 
-        # I've completed them but I commented them out and went back to the old format because they keep causing
-        # bad requests and I can't tell why
-
-        # print('TESTING BEGINNING OF THIS')
-        # if self.host: req_str += "Host: {0}\r\n".format(self.host)
-        # if self.user_agent: req_str += "User-Agent: {0}".format(self.user_agent)
-        # if self.accept_lang: req_str += "Accept-Language: {0}\r\n".format(self.accept_lang)
-        # if self.accept_encoding: req_str += "Accept-Encoding: {0}\r\n".format(self.accept_encoding)
-        # if self.content_type: req_str += "Content-Type: {0}\r\n".format(self.content_type)
-        # if self.content_length: req_str += "Content-Length: {0}\r\n".format(self.content_length)
-        # if self.connection: req_str += "Connection: {0}\r\n\n".format(self.connection)
-        # print('TESTING END OF THIS')
-
-        return bytes(req_str + '\r\n', 'utf-8')
+        return bytes((req_str + '\r\n'), 'ISO-8859-1')

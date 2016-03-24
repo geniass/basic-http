@@ -4,7 +4,7 @@ import sys
 
 # Connect a new client
 try:
-    proxy_addr = input("Please input your proxy server addr:\n")
+    proxy_addr = input("Please input your proxy server addr: (Leave blank if you do not require this)\n")
 
     if proxy_addr == '':
         proxy_port = 0
@@ -21,6 +21,12 @@ try:
 
     input_address = input("Please enter your desired web-address:\n")
 
+    if method == 'POST' or method == 'PUT':
+        content = "Please enter the information you would like to " + method.lower() + ":\n"
+        content = input(content)
+    else:
+        content = ''
+
     client = Client(input_address, 80, proxy_addr, proxy_port)
 
 except (TimeoutError,ConnectionRefusedError):
@@ -30,23 +36,15 @@ except (TimeoutError,ConnectionRefusedError):
 print("Connected")
 
 message = ''.join(['a' for c in range(8100)]) + 'b'
-req = bytes(message, "utf-8")
-client.send(req, method)
+req = bytes(message, 'ISO-8859-1')
+client.send(req, method, content)
 
-# client2 = Client("127.0.0.1", 8000)
-# client2.send(bytes("client b", 'utf-8'))
-#
-# for i in range(10):
-#     c = Client("127.0.0.1", 8000)
-#     c.send(bytes("client " + str(i), 'utf-8'))
-#     c.close()
-
-reply = client.receive()
+reply = client.receive
 
 if reply == b'':
     print("Server closed connection")
 else:
-    print("Server replied: " + str(reply, "ISO-8859-1"))
+    print("Server replied: " + str(reply, 'ISO-8859-1'))
 
 client.socket.shutdown(socket.SHUT_WR)
 client.close()

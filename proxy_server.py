@@ -29,20 +29,25 @@ class proxy_server_thread(threading.Thread):
             uri = uri[:(uri.find('HTTP/1.1') - 1)]
             input_address = host + uri
 
+            if method == 'POST' or method == 'PUT':
+                content = message_str[(message_str.find('\r\n\n') + 3):]
+            else:
+                content = ''
+
             print("This proxy server is now going to take the client to: ", input_address)
 
             print('\n***MAKING REQUEST FOR CLIENT...***\n')
             prox_client = Client(input_address, 80, '', 0)
             message = ''.join(['a' for c in range(8100)]) + 'b'
-            req = bytes(message, "utf-8")
-            prox_client.send(req, method)
+            req = bytes(message, 'ISO-8859-1')
+            prox_client.send(req, method, content)
+            print('\nSent request. Waiting....\n')
 
-            server_reply = prox_client.receive()
-
+            server_reply = prox_client.receive
             if server_reply == b'':
                 print("Server closed connection")
             else:
-                print("Server replied: " + str(server_reply, encoding="ISO-8859-1"))
+                print("Server replied: " + str(server_reply, 'ISO-8859-1'))
 
             print('\n***PROXY SERVER FORWARDING RESPONSE BACK TO CLIENT***\n')
             self.socket.sendall(server_reply)

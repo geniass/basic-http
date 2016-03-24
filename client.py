@@ -11,20 +11,18 @@ def adjust_address(address):
     if address.startswith("http://"):
         address = address[7:]
 
-    if address.startswith('www.') == False:
-        address = 'www.' + address
-
     return address
 
 def get_host(url):
         return url.split("/")[0]
 
 def get_url(url, host):
-    url2 = "".join(url.rsplit(host))
-    if url2 == '':
-        url2 = "/"
 
-    return  url2
+    uri = "".join(url.rsplit(host))
+    if uri == '':
+        uri = "/"
+
+    return uri
 
 class Client:
 
@@ -38,10 +36,11 @@ class Client:
         else:
             self.socket.connect((proxy_address, proxy_port))
 
-    def send(self, message, method):
+    def send(self, message, method, content):
         req = HttpRequest.HttpRequest()
         req.host = self.host
         req.uri = self.url
+        req.content = bytes(content, 'ISO-8859-1')
         if method == '':
             # Default method
             req.method = 'GET'
@@ -52,9 +51,10 @@ class Client:
         print(str(req.gen_request(), 'ISO-8859-1'))
         print(self.socket.sendall(req.gen_request()))
 
+    @property
     def receive(self):
         message = self.socket.recv(2048)
-        msg_str = str(message, "ISO-8859-1")
+        msg_str = str(message, 'ISO-8859-1')
 
         if message == b'':
             print("Socket {0} closed\n".format(self.socket.getsockname()))
@@ -72,13 +72,13 @@ class Client:
                 self.url = get_url(adjust_address(input_address), self.host)
 
                 message = ''.join(['a' for c in range(8100)]) + 'b'
-                req = bytes(message, "ISO-8859-1")
-                self.send(req,'')
+                req = bytes(message, 'ISO-8859-1')
+                self.send(req,'','')
 
-                msg_str = str(self.socket.recv(2048), "ISO-8859-1")
+                msg_str = str(self.socket.recv(2048), 'ISO-8859-1')
 
-        message = bytes(msg_str,'UTF-8')
-        return (message)
+        message = bytes(msg_str,'ISO-8859-1')
+        return message
 
     def close(self):
         self.socket.close()
