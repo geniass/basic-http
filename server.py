@@ -7,60 +7,30 @@ from socket_utils import recv_message
 
 import HttpResponse
 from HttpMessage import BadRequestError
+from ServerRequestHandler import ServerRequestHandler
 
 
 class ServerThread(threading.Thread):
 
-    def __init__(self, s, allow_persistent=True, static_dir="./static"):
+    def __init__(self, s, RequestHandlerClass=ServerRequestHandler, allow_persistent=True, static_dir="./static"):
         super(ServerThread, self).__init__()
         self.socket = s
+        self.RequestHandlerClass = RequestHandlerClass
         self.allow_persistent = allow_persistent
         self.static_dir = Path(static_dir).resolve()
-
-    def handle_get(self, request, response):
-        norm_path = Path(str(self.static_dir) + request.uri)
-
-        if request.uri == "/":
-            # redirect / to index.html
-            norm_path = self.static_dir / "index.html"
-        if not norm_path.match(str(self.static_dir) + "/*"):
-            # client tried to access a path outside of static_dir!
-            response.status_code = 403
-            response.reason = "Forbidden. Don't even try"
-            return
-        elif norm_path.is_file():
-            # send the file
-            response.content = norm_path.open(mode='rb').read()
-        else:
-            response.status_code = 404
-            response.reason = "Not found"
-
-    def handle_head(self, request, response):
-        self.handle_get(request, response)
-        # HEAD should return headers only
-        response.content_length = len(response.content)
-        response.content = b""
 
     def run(self):
         while True:
             try:
                 req = recv_message(self.socket)
 
+                handler = self.RequestHandlerClass(
+                    req, static_dir=self.static_dir)
+                response = handler.handle()
+                # if the client requested persistent connections, and they are
+                # allowed, then return Connection: keep-alive
                 connection = req.connection if self.allow_persistent else "close"
-                response = HttpResponse.HttpResponse()
                 response.connection = connection
-
-                method = req.method
-                if method == "GET":
-                    self.handle_get(req, response)
-                elif method == "HEAD":
-                    self.handle_head(req, response)
-                elif method == "POST":
-                    response.content = b"You sent a post request!"
-                elif method == "PUT":
-                    pass
-                elif method == "DELETE":
-                    pass
 
                 # print(response.gen_response())
                 self.socket.sendall(response.gen_response())
@@ -78,6 +48,7 @@ class ServerThread(threading.Thread):
                 self.socket.sendall(response.gen_response())
             except ConnectionError as e:
                 print(e, file=sys.stderr)
+                break
             except OSError as e:
                 print(e, file=sys.stderr)
 
