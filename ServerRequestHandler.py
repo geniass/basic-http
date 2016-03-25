@@ -53,10 +53,25 @@ class ServerRequestHandler:
         return self.response
 
     def handle_post(self):
+        self.response.content = bytes(
+            "<html><body><p>You sent a POST:</p><br><p>{0}</p></body></html>"
+            .format(str(self.request.content, "utf-8")), "utf-8")
+        self.response.status_code = 401
+        self.response.reason = "Unauthorized"
         return self.response
 
     def handle_put(self):
+        self.response.content = bytes(
+            "<html><body><p>You sent a POST:</p><br><p>{0}</p></body></html>"
+            .format(str(self.request.content, "utf-8")), "utf-8")
+        self.response.status_code = 401
+        self.response.reason = "Unauthorized"
         return self.response
 
     def handle_delete(self):
+        self.response.content = bytes(
+            "<html><body><p>You tried to delete {0} !</p></body></html>"
+            .format(self.request.uri), "utf-8")
+        self.response.status_code = 401
+        self.response.reason = "Unauthorized"
         return self.response
