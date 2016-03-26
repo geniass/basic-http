@@ -27,11 +27,19 @@ class ServerRequestHandler:
         return self.response
 
     def handle_get(self):
+        print("GET " + self.request.uri)
         norm_path = Path(str(self.static_dir) + self.request.uri)
 
         if self.request.uri == "/":
             # redirect / to index.html
-            norm_path = self.static_dir / "index.html"
+            # norm_path = self.static_dir / "index.html"
+            self.response.status_code = 301
+            self.response.reason = "Moved permanently"
+            self.response.location = "/index.html"
+            self.response.content = bytes(
+                '<html><body><a href="/index.html"></a></body></html>', 'utf-8')
+
+            return self.response
         if not norm_path.match(str(self.static_dir) + "/*"):
             # client tried to access a path outside of static_dir!
             self.response.status_code = 403
@@ -39,6 +47,8 @@ class ServerRequestHandler:
         elif norm_path.is_file():
             # send the file
             self.response.content = norm_path.open(mode='rb').read()
+            self.response.status_code = 200
+            self.response.reason = "OK"
         else:
             self.response.status_code = 404
             self.response.reason = "Not found"
@@ -54,24 +64,24 @@ class ServerRequestHandler:
 
     def handle_post(self):
         self.response.content = bytes(
-            "<html><body><p>You sent a POST:</p><br><p>{0}</p></body></html>"
-            .format(str(self.request.content, "utf-8")), "utf-8")
-        self.response.status_code = 401
-        self.response.reason = "Unauthorized"
+            "<html><body><p>You sent a {0}:</p><br><p>{1}</p></body></html>"
+            .format(self.request.method, str(self.request.content, "utf-8")), "utf-8")
+        self.response.status_code = 202
+        self.response.reason = "Accepted"
         return self.response
 
     def handle_put(self):
         self.response.content = bytes(
-            "<html><body><p>You sent a POST:</p><br><p>{0}</p></body></html>"
-            .format(str(self.request.content, "utf-8")), "utf-8")
-        self.response.status_code = 401
-        self.response.reason = "Unauthorized"
+            "<html><body><p>You sent a {0}:</p><br><p>{1}</p></body></html>"
+            .format(self.request.method, str(self.request.content, "utf-8")), "utf-8")
+        self.response.status_code = 202
+        self.response.reason = "Accepted"
         return self.response
 
     def handle_delete(self):
         self.response.content = bytes(
             "<html><body><p>You tried to delete {0} !</p></body></html>"
             .format(self.request.uri), "utf-8")
-        self.response.status_code = 401
-        self.response.reason = "Unauthorized"
+        self.response.status_code = 202
+        self.response.reason = "Accepted"
         return self.response
