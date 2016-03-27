@@ -1,21 +1,17 @@
 import HttpRequest
+import HttpResponse
 
 
-def recv_content(sock_file, content_length):
+def recv_content(sock_file, content_length=-1):
     """
     Reads content_length bytes from sock_file
     :param sock_file: a file (usually) created by socket.makefile()y
     :param content_length: number of bytes to read from sock_file
     :return: content_length bytes from sock_file
     """
-    chunks = bytearray()
-    print("content length", content_length)
-    while len(chunks) < content_length:
-        chunk = sock_file.read(min(content_length - len(chunks), 2048))
-        if chunk == b'':
-            raise RuntimeError("Socket connection broken")
-        chunks.extend(chunk)
-    return chunks
+    print("Content length: ", content_length)
+    content = sock_file.read(content_length)
+    return content
 
 
 def recv_header(sock_file):
@@ -32,15 +28,32 @@ def recv_header(sock_file):
     return header
 
 
-def recv_message(socket):
+def recv_message(socket, HttpMessageClass=HttpRequest.HttpRequest):
     """
     Receives a HTTP message from sock
     :param sock: socket to read from
-    :return: HttpRequest object with headers and content (if present)
+    :param HttpMessageClass: the class of the type of message to receive
+    (HttpRequest or HttpResponse)
+    :return: HttpMessageClass object with headers and content (if present)
     """
     with socket.makefile('rb') as sock_file:
         header = recv_header(sock_file)
-        request = HttpRequest.HttpRequest(request=header)
-        if request.content_length:
-            request.content = recv_content(sock_file, request.content_length)
-        return request
+        message = HttpMessageClass(header)
+        if message.content_length > 0:
+            message.content = recv_content(sock_file, message.content_length)
+        elif message.connection.lower() == "close":
+            # www.w3.org/Protocols/HTTP/1.0/spec.html#BodyLength
+            # if no content-length specified, then the server must close
+            # the connection when finished transmitting
+            message.content = recv_content(sock_file)
+            message.content_length = len(message.content)
+        print("Actual content length: ", message.content_length)
+        return message
+
+
+def recv_response(socket):
+    return recv_message(socket, HttpMessageClass=HttpResponse.HttpResponse)
+
+
+def recv_request(socket):
+    return recv_message(socket, HttpMessageClass=HttpRequest.HttpRequest)
