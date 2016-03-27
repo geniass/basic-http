@@ -2,6 +2,7 @@ import socket
 import HttpRequest
 from socket_utils import recv_response
 import sys
+from ResourceHTMLParser import ResourceHTMLParser
 
 
 def adjust_address(address):
@@ -66,7 +67,24 @@ class Client:
             self.reset_connection(get_host(redirect_addr), self.port)
             self.socket.sendall(req.gen_message())
             response = recv_response(self.socket)
-        print(response.content)
+
+        parser = ResourceHTMLParser()
+        resources = parser.extract_resource_urls(
+            str(response.content, "utf-8"))
+        print("RESOURCES", resources)
+        for resource in resources:
+            # send request for resource
+            # receive file
+            # save somewhere
+            req = HttpRequest.HttpRequest()
+            request.host = self.host
+            req.uri = resource
+            self.socket.sendall(req.gen_message())
+            response = recv_response(self.socket)
+            filename = resource.replace("/", "_")
+            with open("temp/" + filename, "wb") as f:
+                f.write(response.content)
+
         return response
 
     def close(self):
