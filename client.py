@@ -3,6 +3,8 @@ import HttpRequest
 from socket_utils import recv_response
 import sys
 from ResourceHTMLParser import ResourceHTMLParser
+import hashlib
+import os.path
 
 
 def adjust_address(address):
@@ -29,6 +31,14 @@ def get_url(url, host):
     return uri
 
 
+def get_relative_url(url):
+    rel_url = "/"
+    first_slash = url.find("/")
+    if first_slash >= 0:
+        rel_url = url[first_slash:]
+    return rel_url
+
+
 class Client:
 
     def __init__(self, address, port, proxy_address, proxy_port):
@@ -46,6 +56,25 @@ class Client:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((address, port))
 
+    def save_all_resources(self, resource_urls):
+        for resource in resource_urls:
+            # send request for resource
+            # receive file
+            # save somewhere
+            print("Fetching: ", resource)
+            req = HttpRequest.HttpRequest()
+            req.host = get_host(adjust_address(resource))
+            req.uri = get_relative_url(adjust_address(resource))
+            self.socket.sendall(req.gen_message())
+            resource_response = recv_response(self.socket)
+            filename, extension = os.path.splitext(resource)
+            filename = hashlib.sha1(
+                resource_response.content).hexdigest() + extension
+            with open("temp/" + filename, "wb") as f:
+                f.write(resource_response.content)
+            if resource_response.connection == "close":
+                self.reset_connection(self.host, self.port)
+
     def request(self, request):
         request.host = self.host
         request.uri = self.url
@@ -56,9 +85,10 @@ class Client:
             print(response.gen_message())
             print("Redirecting to: " + response.location)
             redirect_addr = adjust_address(response.location)
+            self.host = get_host(redirect_addr)
             req = HttpRequest.HttpRequest()
             req.uri = get_url(redirect_addr, get_host(redirect_addr))
-            req.host = get_host(redirect_addr)
+            req.host = self.host
             print(redirect_addr)
             req.method = request.method
             # TODO: HttpRequest copy constructor
@@ -72,18 +102,7 @@ class Client:
         resources = parser.extract_resource_urls(
             str(response.content, "utf-8"))
         print("RESOURCES", resources)
-        for resource in resources:
-            # send request for resource
-            # receive file
-            # save somewhere
-            req = HttpRequest.HttpRequest()
-            request.host = self.host
-            req.uri = resource
-            self.socket.sendall(req.gen_message())
-            resource_response = recv_response(self.socket)
-            filename = resource.replace("/", "_")
-            with open("temp/" + filename, "wb") as f:
-                f.write(resource_response.content)
+        self.save_all_resources(resources)
 
         return response
 

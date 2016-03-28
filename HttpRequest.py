@@ -16,10 +16,10 @@ class HttpRequest(HttpMessage):
         self.uri = ''
         self.http_version = 'HTTP/1.0'
         self.connection = 'keep-alive'
-        self.user_agent = ''
+        self.user_agent = 'curl/7.40.0'
         self.accept_lang = 'en-GB,en;q=0.5'
-        self.accept_encoding = 'gzip, deflate'
-        self.accept = '/'
+        self.accept_encoding = ''
+        self.accept = '*/*'
         self.content_type = 'application/x-www-form-urlencoded'
         # Use content_type = 'multipart/form-data' for file uploads
         self.content = b''
@@ -71,14 +71,20 @@ class HttpRequest(HttpMessage):
             req_str += 'Host: {0}\r\n'.format(self.host)
         if self.user_agent:
             req_str += 'User-Agent: {0}\r\n'.format(self.user_agent)
-
-        if (self.method == 'GET') or (self.method == 'HEAD') or (self.method == 'DELETE'):
-            pass
+        if self.accept:
+            req_str += 'Accept: {0}\r\n'.format(self.accept)
+        if self.accept_lang:
+            req_str += 'Accept-Lang: {0}\r\n'.format(self.accept_lang)
+        if self.accept_encoding:
+            req_str += 'Accept-Encoding: {0}\r\n'.format(self.accept_encoding)
+        if self.connection:
+            req_str += 'Connection: {0}\r\n'.format(self.connection)
 
         if (self.method == 'POST') or (self.method == 'PUT'):
-            req_str += 'Accept: {0}\r\nAccept-Language: {1}\r\nAccept-Encoding: {2}\r\nContent-Type: {3}\r\n' \
-                       'Content-Length: {4}\r\nConnection: {5}\r\n\n{6}\n'.format(self.accept, self.accept_lang,
-                                                                                  self.accept_encoding, self.content_type,
-                                                                                  self.content_length, self.connection, self.content)
+            req_str += "Content-Type: {0}\r\n"
+            "Content-Length: {1}\r\n".format(
+                self.content_type, self.content_length)
 
-        return bytes((req_str + '\r\n'), 'ISO-8859-1')
+        req_bytes = bytearray(req_str + "\r\n", "utf-8")
+        req_bytes += self.content if self.content else b""
+        return req_bytes
