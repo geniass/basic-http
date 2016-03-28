@@ -20,7 +20,7 @@ class HttpRequest(HttpMessage):
         self.accept_lang = 'en-GB,en;q=0.5'
         self.accept_encoding = ''
         self.accept = '*/*'
-        self.content_type = 'application/x-www-form-urlencoded'
+        self.content_type = 'raw'
         # Use content_type = 'multipart/form-data' for file uploads
         self.content = b''
         self.content_length = len(self.content)
@@ -81,9 +81,10 @@ class HttpRequest(HttpMessage):
             req_str += 'Connection: {0}\r\n'.format(self.connection)
 
         if (self.method == 'POST') or (self.method == 'PUT'):
-            req_str += "Content-Type: {0}\r\n"
-            "Content-Length: {1}\r\n".format(
-                self.content_type, self.content_length)
+            self.content_length = len(self.content)
+            req_str += "Content-Type: {0}\r\nContent-Length: {1}\r\n".format(self.content_type, self.content_length)
+
+            print(req_str)
 
         req_bytes = bytearray(req_str + "\r\n", "utf-8")
         req_bytes += self.content if self.content else b""

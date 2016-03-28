@@ -41,7 +41,7 @@ print("Connected")
 
 req = HttpRequest.HttpRequest()
 req.method = method
-req.content = content
+req.content = bytes(content, 'UTF-8')
 reply = client.request(req)
 
 print(reply.gen_message())

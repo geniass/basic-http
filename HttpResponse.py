@@ -51,6 +51,8 @@ class HttpResponse(HttpMessage):
                 self.date = header['date']
             if 'location' in header:
                 self.location = header['location']
+            if 'last-modified' in header:
+                self.last_mod = header['last-modified']
 
     def gen_message(self):
         """

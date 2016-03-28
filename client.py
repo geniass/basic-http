@@ -9,8 +9,7 @@ import os.path
 
 def adjust_address(address):
     if address.startswith("https://"):
-        sys.exit(
-            "\nUnfortunately this client cannot connect to secure servers. Goodbye!")
+        print("\nUnfortunately this client cannot connect to secure servers. Goodbye!")
 
     if address.startswith("http://"):
         address = address[7:]
@@ -70,8 +69,8 @@ class Client:
             filename, extension = os.path.splitext(resource)
             filename = hashlib.sha1(
                 resource_response.content).hexdigest() + extension
-            with open("temp/" + filename, "wb") as f:
-                f.write(resource_response.content)
+            # with open("temp/" + filename, "wb") as f:
+            #     f.write(resource_response.content)
             if resource_response.connection == "close":
                 self.reset_connection(self.host, self.port)
 
@@ -99,8 +98,7 @@ class Client:
             response = recv_response(self.socket)
 
         parser = ResourceHTMLParser()
-        resources = parser.extract_resource_urls(
-            str(response.content, "utf-8"))
+        resources = parser.extract_resource_urls(str(response.content, "ISO-8859-1"))
         print("RESOURCES", resources)
         self.save_all_resources(resources)
 

@@ -78,4 +78,5 @@ def parse_message(data):
         if k not in message['header']:
             message['header'][k] = v.strip()
 
+    print(message)
     return message

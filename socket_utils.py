@@ -9,7 +9,7 @@ def recv_content(sock_file, content_length=-1):
     :param content_length: number of bytes to read from sock_file
     :return: content_length bytes from sock_file
     """
-    print("Testing: Content length: ", content_length)
+    # print("Testing: Content length: ", content_length)
     content = sock_file.read(content_length)
     return content
 
@@ -48,7 +48,7 @@ def recv_message(socket, HttpMessageClass=HttpRequest.HttpRequest):
             # the connection when finished transmitting
             message.content = recv_content(sock_file)
             message.content_length = len(message.content)
-        print("Actual content length: ", len(message.content))
+        # print("Actual content length: ", len(message.content))
         return message
 
 
