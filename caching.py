@@ -17,6 +17,7 @@ def check_if_cache_fresh(request, cache):
 
 def save_in_cache(request, server_response, cache):
     # if it is cache-able:
+    print(server_response)
     if(str(server_response, 'ISO-8859-1').find('Last-Modified:')) > -1:
         last_mod_date = str(server_response, 'ISO-8859-1')[str(server_response, 'ISO-8859-1').find('Last-Modified:') + 15:]
         last_mod_date = last_mod_date[:last_mod_date.find('GMT')]

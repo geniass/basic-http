@@ -3,6 +3,7 @@ import threading
 from client import Client
 import dataset
 import caching
+import HttpRequest
 
 class proxy_server_thread(threading.Thread):
     def __init__(self, sock, allow_persistent=True):
@@ -35,6 +36,7 @@ class proxy_server_thread(threading.Thread):
         # Obtained response, now forward to client
         print('\n***PROXY SERVER FORWARDING RESPONSE BACK TO CLIENT***\n')
         self.socket.sendall(server_reply)
+        print("testing socket send")
 
 # Function to make request desired by client
 def make_request_for_client(request):
@@ -52,7 +54,7 @@ def make_request_for_client(request):
     host = host[:host.find('\r\n')]
 
     uri = request_str[(request_str.find(method) + len(method) + 1):]
-    uri = uri[:(uri.find('HTTP/1.1') - 1)]
+    uri = uri[:(uri.find('HTTP/1.0') - 1)]
 
     input_address = host + uri
 
@@ -65,18 +67,18 @@ def make_request_for_client(request):
 
     print('\n***MAKING REQUEST FOR CLIENT...***\n')
     prox_client = Client(input_address, 80, '', 0)
-    request = ''.join(['a' for c in range(8100)]) + 'b'
-    req = bytes(request, 'ISO-8859-1')
-    prox_client.send(req, method, content)
-    print('\nSent request. Waiting....\n')
 
-    server_reply = prox_client.receive
-    if server_reply == b'':
-        print("Server closed connection")
-    else:
-        print("Server replied:\n" + str(server_reply, 'ISO-8859-1'))
+    # request = ''.join(['a' for c in range(8100)]) + 'b'
+    # req = bytes(request, 'ISO-8859-1')
 
-    return server_reply
+    req = HttpRequest.HttpRequest()
+    req.method = method
+    req.content = content
+    server_reply = prox_client.request(req)
+
+    print(str(server_reply.gen_message(), 'UTF-8'))
+
+    return server_reply.gen_message()
 
 
 class Proxy_server:

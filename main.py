@@ -44,13 +44,7 @@ req.method = method
 req.content = content
 reply = client.request(req)
 
-print(str(reply.gen_message(), 'UTF-8'))
-# =======
-# if reply == b'':
-#     print("Server closed connection")
-# else:
-#     print("Server replied:\n" + str(reply, 'ISO-8859-1'))
-# >>>>>>> Stashed changes
+print(reply.gen_message())
 
 client.socket.shutdown(socket.SHUT_WR)
 client.close()

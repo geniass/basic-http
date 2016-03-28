@@ -9,7 +9,7 @@ def recv_content(sock_file, content_length=-1):
     :param content_length: number of bytes to read from sock_file
     :return: content_length bytes from sock_file
     """
-    print("Content length: ", content_length)
+    print("Testing: Content length: ", content_length)
     content = sock_file.read(content_length)
     return content
 
