@@ -32,7 +32,6 @@ class ServerThread(threading.Thread):
                 connection = req.connection if self.allow_persistent else "close"
                 response.connection = connection
 
-                # print(response.gen_message())
                 self.socket.sendall(response.gen_message())
 
                 if "keep-alive" not in req.connection.lower() or not self.allow_persistent:

@@ -40,10 +40,11 @@ def get_relative_url(url):
 
 class Client:
 
-    def __init__(self, address, port, proxy_address, proxy_port):
+    def __init__(self, address, port, proxy_address, proxy_port, fetch_resources=False):
         self.host = get_host(adjust_address(address))
         self.url = get_url(adjust_address(address), self.host)
         self.port = port
+        self.fetch_resources = fetch_resources
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if proxy_address == '':
             self.socket.connect((self.host, port))
@@ -60,6 +61,9 @@ class Client:
             # send request for resource
             # receive file
             # save somewhere
+            if not resource.startswith("http://"):
+                continue
+
             print("Fetching: ", resource)
             req = HttpRequest.HttpRequest()
             req.host = get_host(adjust_address(resource))
@@ -69,8 +73,8 @@ class Client:
             filename, extension = os.path.splitext(resource)
             filename = hashlib.sha1(
                 resource_response.content).hexdigest() + extension
-            # with open("temp/" + filename, "wb") as f:
-            #     f.write(resource_response.content)
+            with open("temp/" + filename, "wb") as f:
+                f.write(resource_response.content)
             if resource_response.connection == "close":
                 self.reset_connection(self.host, self.port)
 
@@ -97,10 +101,11 @@ class Client:
             self.socket.sendall(req.gen_message())
             response = recv_response(self.socket)
 
-        parser = ResourceHTMLParser()
-        resources = parser.extract_resource_urls(str(response.content, "ISO-8859-1"))
-        print("RESOURCES", resources)
-        self.save_all_resources(resources)
+        if "text/html" in response.content_type and self.fetch_resources:
+            parser = ResourceHTMLParser()
+            resources = parser.extract_resource_urls(str(response.content, "ISO-8859-1"))
+            print("RESOURCES", resources)
+            self.save_all_resources(resources)
 
         return response
 

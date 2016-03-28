@@ -29,7 +29,7 @@ try:
     else:
         content = ''
 
-    client = Client(input_address, 80, proxy_addr, proxy_port)
+    client = Client(input_address, 80, proxy_addr, proxy_port, fetch_resources=True)
 
 except (TimeoutError, ConnectionRefusedError):
     print("\nCould not connect to desired proxy server. "

@@ -46,7 +46,6 @@ class ProxyRequestHandler:
         #     self.response.status_code = 404
         #     self.response.reason = "Not found"
 
-
     def handle_post_put(self):
         input_address = self.request.host + self.request.uri
         print("Input Address: " + input_address)

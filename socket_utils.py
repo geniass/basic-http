@@ -25,6 +25,8 @@ def recv_header(sock_file):
         header.extend(line)
         if line == b"\r\n":
             break
+    if header == b"":
+        raise ConnectionResetError()
     return header
 
 

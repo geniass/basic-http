@@ -21,6 +21,7 @@ class HttpResponse(HttpMessage):
         self.connection = 'keep-alive'
         self.date = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT")
         self.location = ""
+        self.content_type = ""
         self.content_length = 0
         self.content = b""
 
@@ -53,6 +54,8 @@ class HttpResponse(HttpMessage):
                 self.location = header['location']
             if 'last-modified' in header:
                 self.last_mod = header['last-modified']
+            if 'content-type' in header:
+                self.content_type = header['content-type']
 
     def gen_message(self):
         """
@@ -69,6 +72,8 @@ class HttpResponse(HttpMessage):
             req_str += "Connection: {0}\r\n".format(self.connection)
         if self.location:
             req_str += "Location: {0}\r\n".format(self.location)
+        if self.content_type:
+            req_str += "Content-Type: {0}\r\n".format(self.content_type)
 
         if self.content_length:
             req_str += "Content-Length: {0}\r\n".format(self.content_length)
