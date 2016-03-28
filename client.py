@@ -1,20 +1,24 @@
 import socket
-import HttpResponse
 import HttpRequest
-from socket_utils import recv_content
+from socket_utils import recv_response
 import sys
+from ResourceHTMLParser import ResourceHTMLParser
+
 
 def adjust_address(address):
     if address.startswith("https://"):
-        sys.exit("\nUnfortunately this client cannot connect to secure servers. Goodbye!")
+        sys.exit(
+            "\nUnfortunately this client cannot connect to secure servers. Goodbye!")
 
     if address.startswith("http://"):
         address = address[7:]
 
     return address
 
+
 def get_host(url):
-        return url.split("/")[0]
+    return url.split("/")[0]
+
 
 def get_url(url, host):
 
@@ -23,6 +27,7 @@ def get_url(url, host):
         uri = "/"
 
     return uri
+
 
 class Client:
 
@@ -36,49 +41,51 @@ class Client:
         else:
             self.socket.connect((proxy_address, proxy_port))
 
-    def send(self, message, method, content):
-        req = HttpRequest.HttpRequest()
-        req.host = self.host
-        req.uri = self.url
-        req.content = bytes(content, 'ISO-8859-1')
-        if method == '':
-            # Default method
-            req.method = 'GET'
-        else:
-            req.method = method
-        req.user_agent = 'Mozilla/5.0 (X11; Fedora; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.75 Safari/537.36'
-        print(req.gen_request())
-        print(str(req.gen_request(), 'ISO-8859-1'))
-        print(self.socket.sendall(req.gen_request()))
+    def reset_connection(self, address, port):
+        self.socket.close()
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((address, port))
 
-    @property
-    def receive(self):
-        message = self.socket.recv(2048)
-        msg_str = str(message, 'ISO-8859-1')
+    def request(self, request):
+        request.host = self.host
+        request.uri = self.url
+        self.socket.sendall(request.gen_message())
+        response = recv_response(self.socket)
 
-        if message == b'':
-            print("Socket {0} closed\n".format(self.socket.getsockname()))
-            print("Server closed connection")
-        else:
-            print("Buffer", repr(message))
-            while msg_str.find('HTTP/1.1 3') > -1:
-                print("Server replied: " + msg_str)
-                redirect_addr = msg_str[(msg_str.find('Location')+10):]
-                redirect_addr = redirect_addr[:redirect_addr.find('\r\n')]
+        while response.status_code in (301, 302):
+            print(response.gen_message())
+            print("Redirecting to: " + response.location)
+            redirect_addr = adjust_address(response.location)
+            req = HttpRequest.HttpRequest()
+            req.uri = get_url(redirect_addr, get_host(redirect_addr))
+            req.host = get_host(redirect_addr)
+            print(redirect_addr)
+            req.method = request.method
+            # TODO: HttpRequest copy constructor
+            print(req.gen_message())
 
-                print("Redirecting to: ",redirect_addr)
-                input_address = redirect_addr
+            self.reset_connection(get_host(redirect_addr), self.port)
+            self.socket.sendall(req.gen_message())
+            response = recv_response(self.socket)
 
-                self.url = get_url(adjust_address(input_address), self.host)
+        parser = ResourceHTMLParser()
+        resources = parser.extract_resource_urls(
+            str(response.content, "utf-8"))
+        print("RESOURCES", resources)
+        for resource in resources:
+            # send request for resource
+            # receive file
+            # save somewhere
+            req = HttpRequest.HttpRequest()
+            request.host = self.host
+            req.uri = resource
+            self.socket.sendall(req.gen_message())
+            response = recv_response(self.socket)
+            filename = resource.replace("/", "_")
+            with open("temp/" + filename, "wb") as f:
+                f.write(response.content)
 
-                message = ''.join(['a' for c in range(8100)]) + 'b'
-                req = bytes(message, 'ISO-8859-1')
-                self.send(req,'','')
-
-                msg_str = str(self.socket.recv(2048), 'ISO-8859-1')
-
-        message = bytes(msg_str,'ISO-8859-1')
-        return message
+        return response
 
     def close(self):
         self.socket.close()

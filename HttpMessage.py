@@ -1,6 +1,12 @@
 import re
 
 
+class HttpMessage:
+
+    def gen_message():
+        pass
+
+
 class BadRequestError(Exception):
 
     def __init__(self):
@@ -66,7 +72,7 @@ def parse_message(data):
         # message is badly formed
         raise BadRequestError()
 
-    header_list = [h.split(':') for h in header_list]
+    header_list = [h.split(': ') for h in header_list]
     headers = {h[0].lower(): h[1] for h in header_list if len(h) == 2}
     for k, v in headers.items():
         if k not in message['header']:

@@ -32,8 +32,8 @@ class ServerThread(threading.Thread):
                 connection = req.connection if self.allow_persistent else "close"
                 response.connection = connection
 
-                # print(response.gen_response())
-                self.socket.sendall(response.gen_response())
+                # print(response.gen_message())
+                self.socket.sendall(response.gen_message())
 
                 if "keep-alive" not in req.connection.lower() or not self.allow_persistent:
                     print("Closing connection")
@@ -45,7 +45,7 @@ class ServerThread(threading.Thread):
                 response = HttpResponse.HttpResponse()
                 response.status_code = 400
                 response.reason = "Bad request"
-                self.socket.sendall(response.gen_response())
+                self.socket.sendall(response.gen_message())
             except ConnectionError as e:
                 print(e, file=sys.stderr)
                 break

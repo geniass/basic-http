@@ -1,8 +1,9 @@
 from HttpMessage import parse_message
 from HttpMessage import BadRequestError
+from HttpMessage import HttpMessage
 
 
-class HttpRequest:
+class HttpRequest(HttpMessage):
 
     def __init__(self, request=''):
         """
@@ -13,7 +14,7 @@ class HttpRequest:
         self.method = 'GET'
         self.host = ''
         self.uri = ''
-        self.http_version = 'HTTP/1.1'
+        self.http_version = 'HTTP/1.0'
         self.connection = 'keep-alive'
         self.user_agent = ''
         self.accept_lang = 'en-GB,en;q=0.5'
@@ -54,17 +55,22 @@ class HttpRequest:
             if 'accept-encoding' in header:
                 self.accept_encoding = header['accept-encoding']
 
-    def gen_request(self):
+    def gen_message(self):
         """
         Generates a bytearray request message that can be transmitted
         Uses the data contained in this HttpRequest instance
         :return: Http request message as a bytearray
         """
-        if self.method: req_str = self.method + ' '
-        if self.uri: req_str += self.uri + ' '
-        if self.http_version: req_str += '{0}\r\n'.format(self.http_version)
-        if self.host: req_str += 'Host: {0}\r\n'.format(self.host)
-        if self.user_agent: req_str += 'User-Agent: {0}\r\n'.format(self.user_agent)
+        if self.method:
+            req_str = self.method + ' '
+        if self.uri:
+            req_str += self.uri + ' '
+        if self.http_version:
+            req_str += '{0}\r\n'.format(self.http_version)
+        if self.host:
+            req_str += 'Host: {0}\r\n'.format(self.host)
+        if self.user_agent:
+            req_str += 'User-Agent: {0}\r\n'.format(self.user_agent)
 
         if (self.method == 'GET') or (self.method == 'HEAD') or (self.method == 'DELETE'):
             pass
@@ -72,7 +78,7 @@ class HttpRequest:
         if (self.method == 'POST') or (self.method == 'PUT'):
             req_str += 'Accept: {0}\r\nAccept-Language: {1}\r\nAccept-Encoding: {2}\r\nContent-Type: {3}\r\n' \
                        'Content-Length: {4}\r\nConnection: {5}\r\n\n{6}\n'.format(self.accept, self.accept_lang,
-                                                            self.accept_encoding, self.content_type,
-                                                            self.content_length, self.connection, self.content)
+                                                                                  self.accept_encoding, self.content_type,
+                                                                                  self.content_length, self.connection, self.content)
 
         return bytes((req_str + '\r\n'), 'ISO-8859-1')
