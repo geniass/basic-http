@@ -29,7 +29,7 @@ try:
     else:
         content = ''
 
-    client = Client(input_address, 8000, proxy_addr, proxy_port)
+    client = Client(input_address, 80, proxy_addr, proxy_port)
 
 except (TimeoutError, ConnectionRefusedError):
     print("\nCould not connect to desired proxy server. "
@@ -44,7 +44,13 @@ req.method = method
 req.content = content
 reply = client.request(req)
 
-print(reply.gen_message())
+print(str(reply.gen_message(), 'UTF-8'))
+# =======
+# if reply == b'':
+#     print("Server closed connection")
+# else:
+#     print("Server replied:\n" + str(reply, 'ISO-8859-1'))
+# >>>>>>> Stashed changes
 
 client.socket.shutdown(socket.SHUT_WR)
 client.close()

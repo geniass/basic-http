@@ -1,7 +1,8 @@
 import socket
 import threading
 from client import Client
-
+import dataset
+import caching
 
 class proxy_server_thread(threading.Thread):
     def __init__(self, sock, allow_persistent=True):
@@ -10,55 +11,83 @@ class proxy_server_thread(threading.Thread):
         self.allow_persistent = allow_persistent
 
     def run(self):
-        while True:
-            message = self.socket.recv(2048)
-            if message == b'':
-                print("Peer {0} closed connection\n".format(self.socket.getpeername()))
-                break
-            else:
-                message_str = str(message, 'UTF-8')
-                print("\n***RECEIVED CONNECTION FROM CLIENT***.\n\nThe received request is:\n", message_str)
+        db = dataset.connect('sqlite:///cache.db')
+        cache = db['user']
 
-            method = message_str.split("/")[0]
-            method = method.replace(' ', '')
+        # Receive request from client
+        message = self.socket.recv(2048)
+        message_str = str(message, 'ISO-8859-1')
 
-            host = message_str[(message_str.find('Host:') + 6):]
-            host = host[:host.find('\r\n')]
+        # Check if request is already in cache
+        request_status = caching.check_if_cache_fresh(message_str, cache)
 
-            uri = message_str[(message_str.find(method) + len(method) + 1):]
-            uri = uri[:(uri.find('HTTP/1.1') - 1)]
-            input_address = host + uri
+        # If not in cache, or object in cache is outdated, make request again
+        if request_status == 'Not found' or request_status == 'Outdated cache. Request again':
+            print('Request not previously in cache, or cached response is outdated')
+            server_reply = make_request_for_client(message)
 
-            if method == 'POST' or method == 'PUT':
-                content = message_str[(message_str.find('\r\n\n') + 3):]
-            else:
-                content = ''
+            # Made request again, now save in cache, IF cache-able
+            caching.save_in_cache(message_str, server_reply, cache)
 
-            print("This proxy server is now going to take the client to: ", input_address)
+        else: #Request found in database and is fresh
+            server_reply = request_status
 
-            print('\n***MAKING REQUEST FOR CLIENT...***\n')
-            prox_client = Client(input_address, 80, '', 0)
-            message = ''.join(['a' for c in range(8100)]) + 'b'
-            req = bytes(message, 'ISO-8859-1')
-            prox_client.send(req, method, content)
-            print('\nSent request. Waiting....\n')
+        # Obtained response, now forward to client
+        print('\n***PROXY SERVER FORWARDING RESPONSE BACK TO CLIENT***\n')
+        self.socket.sendall(server_reply)
 
-            server_reply = prox_client.receive
-            if server_reply == b'':
-                print("Server closed connection")
-            else:
-                print("Server replied: " + str(server_reply, 'ISO-8859-1'))
+# Function to make request desired by client
+def make_request_for_client(request):
+    request_str = str(request, 'ISO-8859-1')
 
-            print('\n***PROXY SERVER FORWARDING RESPONSE BACK TO CLIENT***\n')
-            self.socket.sendall(server_reply)
+    if request == b'':
+        print("Peer closed connection\n")
+    else:
+        print("\n***RECEIVED CONNECTION FROM CLIENT***.\n\nThe received request is:\n", request_str)
+
+    method = request_str.split("/")[0]
+    method = method.replace(' ', '')
+
+    host = request_str[(request_str.find('Host:') + 6):]
+    host = host[:host.find('\r\n')]
+
+    uri = request_str[(request_str.find(method) + len(method) + 1):]
+    uri = uri[:(uri.find('HTTP/1.1') - 1)]
+
+    input_address = host + uri
+
+    if method == 'POST' or method == 'PUT':
+        content = request_str[(request_str.find('\r\n\n') + 3):]
+    else:
+        content = ''
+
+    print("This proxy server is now going to take the client to: ", input_address)
+
+    print('\n***MAKING REQUEST FOR CLIENT...***\n')
+    prox_client = Client(input_address, 80, '', 0)
+    request = ''.join(['a' for c in range(8100)]) + 'b'
+    req = bytes(request, 'ISO-8859-1')
+    prox_client.send(req, method, content)
+    print('\nSent request. Waiting....\n')
+
+    server_reply = prox_client.receive
+    if server_reply == b'':
+        print("Server closed connection")
+    else:
+        print("Server replied:\n" + str(server_reply, 'ISO-8859-1'))
+
+    return server_reply
+
 
 class Proxy_server:
+    # Intialise
     def __init__(self, address, port):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind((address, port))
         self.socket.listen(5)
 
+    # Multithreading
     def run(self):
         try:
             while True:
@@ -74,3 +103,10 @@ class Proxy_server:
 if __name__ == '__main__':
     prox_server = Proxy_server("127.0.0.1", 7000)
     prox_server.run()
+
+# if(str(server_reply, 'ISO-8859-1').find('Expires:')) > -1:
+#     expiry_date = str(server_reply, 'ISO-8859-1')[str(server_reply, 'ISO-8859-1').find('Expires') + 9:]
+#     expiry_date = expiry_date[:expiry_date.find('\r\n')]
+#     if (expiry_date == '-1'):
+#         print('This page CANNOT be cached')
+#     print(expiry_date)

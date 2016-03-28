@@ -80,12 +80,13 @@ class Client:
             request.host = self.host
             req.uri = resource
             self.socket.sendall(req.gen_message())
-            response = recv_response(self.socket)
+            resource_response = recv_response(self.socket)
             filename = resource.replace("/", "_")
             with open("temp/" + filename, "wb") as f:
-                f.write(response.content)
+                f.write(resource_response.content)
 
         return response
+
 
     def close(self):
         self.socket.close()
