@@ -87,6 +87,5 @@ class Client:
 
         return response
 
-
     def close(self):
         self.socket.close()

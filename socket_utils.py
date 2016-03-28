@@ -41,13 +41,14 @@ def recv_message(socket, HttpMessageClass=HttpRequest.HttpRequest):
         message = HttpMessageClass(header)
         if message.content_length > 0:
             message.content = recv_content(sock_file, message.content_length)
+            message.content_length = len(message.content)
         elif message.connection.lower() == "close":
             # www.w3.org/Protocols/HTTP/1.0/spec.html#BodyLength
             # if no content-length specified, then the server must close
             # the connection when finished transmitting
             message.content = recv_content(sock_file)
             message.content_length = len(message.content)
-        print("Actual content length: ", message.content_length)
+        print("Actual content length: ", len(message.content))
         return message
 
 
