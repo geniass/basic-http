@@ -3,6 +3,7 @@ import HttpRequest
 from socket_utils import recv_response
 from ResourceHTMLParser import ResourceHTMLParser
 import hashlib
+import sys
 
 
 def adjust_address(address):
@@ -90,6 +91,8 @@ class Client:
     def request(self, request):
         request.host = self.host
         request.uri = get_proxy_compat_url(self.host, self.url, self.proxy_address)
+        print("This is the generated request in client:")
+        print(request.gen_message())
         self.socket.sendall(request.gen_message())
         response = recv_response(self.socket)
 

@@ -2,6 +2,7 @@ from client import Client
 import socket
 import sys
 import HttpRequest
+from datetime import datetime, timedelta
 
 # Connect a new client
 try:
@@ -28,7 +29,17 @@ try:
     else:
         content = ''
 
-    client = Client(input_address, 80, proxy_addr, proxy_port, fetch_resources=True)
+    if method == 'CONDGET':
+        try:
+            last_mod = input("Please enter your desired last modified date check:(format: dd/mm/yyyy)\n")
+            last_mod = datetime.strptime(last_mod, '%d/%m/%Y')
+        except ValueError:
+            sys.exit('You have incorrectly entered a date. Try again')
+    else:
+        last_mod = datetime.strptime('01/01/1000', '%d/%m/%Y')
+
+
+    client = Client(input_address, 80, proxy_addr, proxy_port, fetch_resources=False)
 
 except (TimeoutError, ConnectionRefusedError):
     sys.exit("\nCould not connect to desired proxy server. "
@@ -39,6 +50,7 @@ print("Connected")
 req = HttpRequest.HttpRequest()
 req.method = method
 req.content = bytes(content, 'UTF-8')
+req.if_mod_since = last_mod.strftime("%a, %d %b %Y %H:%M:%S GMT")
 reply = client.request(req)
 
 print(reply.gen_message())

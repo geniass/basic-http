@@ -24,6 +24,7 @@ class HttpRequest(HttpMessage):
         # Use content_type = 'multipart/form-data' for file uploads
         self.content = b''
         self.content_length = len(self.content)
+        self.if_mod_since = ''
 
         if request:
             message = parse_message(request)
@@ -52,6 +53,8 @@ class HttpRequest(HttpMessage):
                 self.accept_lang = header['accept-lang']
             if 'accept-encoding' in header:
                 self.accept_encoding = header['accept-encoding']
+            if 'if-modified-since' in header:
+                self.if_mod_since = header['if-modified-since']
 
     def gen_message(self):
         """
@@ -59,6 +62,8 @@ class HttpRequest(HttpMessage):
         Uses the data contained in this HttpRequest instance
         :return: Http request message as a bytearray
         """
+        if self.method == 'CONDITIONAL GET':
+            self.method = 'GET'
         if self.method:
             req_str = self.method + ' '
         if self.uri:
@@ -77,12 +82,12 @@ class HttpRequest(HttpMessage):
             req_str += 'Accept-Encoding: {0}\r\n'.format(self.accept_encoding)
         if self.connection:
             req_str += 'Connection: {0}\r\n'.format(self.connection)
+        if self.if_mod_since:
+            req_str += "If-Modified-Since: {0}\r\n".format(self.if_mod_since)
 
         if (self.method == 'POST') or (self.method == 'PUT'):
             self.content_length = len(self.content)
             req_str += "Content-Type: {0}\r\nContent-Length: {1}\r\n".format(self.content_type, self.content_length)
-
-            print(req_str)
 
         req_bytes = bytearray(req_str + "\r\n", "utf-8")
         req_bytes += self.content if self.content else b""

@@ -23,9 +23,17 @@ class ServerThread(threading.Thread):
         while True:
             try:
                 req = recv_message(self.socket)
+                print('\nThe received request is:\n' + str(req.gen_message(),'UTF-8'))
 
                 handler = self.RequestHandlerClass(req, static_dir=self.static_dir)
                 response = handler.handle()
+
+                # Sorry about all this printing, I just like to see what's happening in the program
+                # Remember to remove these comments once you've read them :P
+
+                print("This is the response:")
+                print(response.gen_message())
+
                 # if the client requested persistent connections, and they are
                 # allowed, then return Connection: keep-alive
                 connection = req.connection if self.allow_persistent else "close"
