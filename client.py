@@ -101,6 +101,8 @@ class Client:
             self.socket.sendall(req.gen_message())
             response = recv_response(self.socket)
 
+        if response.connection == "close":
+            self.reset_connection(self.host, self.port)
         if "text/html" in response.content_type and self.fetch_resources:
             parser = ResourceHTMLParser()
             resources = parser.extract_resource_urls(str(response.content, "ISO-8859-1"))
