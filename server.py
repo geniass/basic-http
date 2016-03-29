@@ -24,8 +24,7 @@ class ServerThread(threading.Thread):
             try:
                 req = recv_message(self.socket)
 
-                handler = self.RequestHandlerClass(
-                    req, static_dir=self.static_dir)
+                handler = self.RequestHandlerClass(req, static_dir=self.static_dir)
                 response = handler.handle()
                 # if the client requested persistent connections, and they are
                 # allowed, then return Connection: keep-alive

@@ -2,6 +2,8 @@ from pathlib import Path
 
 from client import Client
 import HttpResponse
+import caching
+import dataset
 
 
 class ProxyRequestHandler:
@@ -22,33 +24,38 @@ class ProxyRequestHandler:
         return self.response
 
     def handle_get_head_delete(self):
-        input_address = self.request.host + self.request.uri
-        print("Input Address: " + input_address)
+        db = dataset.connect('sqlite:///cache.db')
+        cache = db['user']
 
-        print('\n***MAKING REQUEST FOR CLIENT...***\n')
-        prox_client = Client(input_address, 80, '', 0)
-        self.response = prox_client.request(self.request)
+        request_status = caching.check_if_cache_fresh(self.request.gen_message(), cache)
 
-        return self.response
+        # If not in cache, or object in cache is outdated, make request again
+        if request_status == 'Request not found in cache' or \
+                        request_status == 'Outdated cache entry. Requesting again':
 
-        # norm_path = Path(str(self.static_dir) + self.request.uri)
-        #
-        # if not norm_path.match(str(self.static_dir) + "/*"):
-        #     # client tried to access a path outside of static_dir!
-        #     self.response.status_code = 403
-        #     self.response.reason = "Forbidden. Don't even try"
-        # elif norm_path.is_file():
-        #     # send the file
-        #     self.response.content = norm_path.open(mode='rb').read()
-        #     self.response.status_code = 200
-        #     self.response.reason = "OK"
-        # else:
-        #     self.response.status_code = 404
-        #     self.response.reason = "Not found"
+            print(request_status + '\n\n')
+
+            input_address = self.request.host + self.request.uri
+            print("Input Address: " + input_address)
+
+            print('\n***MAKING REQUEST FOR CLIENT...***\n')
+            prox_client = Client(input_address, 80, '', 0)
+            self.response = prox_client.request(self.request)
+
+            # Made request again, now save in cache, IF cache-able
+            caching.save_in_cache(self.request.gen_message(), self.response, cache)
+
+            return self.response
+
+        else:
+            self.response = HttpResponse.HttpResponse(request_status)
+            return self.response
+
 
     def handle_post_put(self):
+        print("Please note: The "+self.request.method+" method does not allow caching")
         input_address = self.request.host + self.request.uri
-        print("Input Address: " + input_address)
+        # print("Input Address: " + input_address)
 
         print('\n***MAKING REQUEST FOR CLIENT...***\n')
         prox_client = Client(input_address, 80, '', 0)

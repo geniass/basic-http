@@ -7,7 +7,7 @@ import hashlib
 
 def adjust_address(address):
     if address.startswith("https://"):
-        print("\nUnfortunately this client cannot connect to secure servers. Goodbye!")
+        sys.exit("\nUnfortunately this client cannot connect to secure servers. Goodbye!")
 
     if address.startswith("http://"):
         address = address[7:]
@@ -46,7 +46,8 @@ class Client:
 
     def __init__(self, address, port, proxy_address, proxy_port, fetch_resources=False):
         self.host = get_host(adjust_address(address))
-        self.url = get_url(adjust_address(address), self.host)
+        # self.url = get_url(adjust_address(address), self.host)
+        self.url = get_relative_url(adjust_address(address))
         self.port = port
         self.proxy_address = proxy_address
         self.proxy_port = proxy_port

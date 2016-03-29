@@ -33,8 +33,6 @@ class HttpRequest(HttpMessage):
                 self.content = message['content']
 
             # check if the relevant header fields are present in the message
-            # TODO: add more header fields eg User-Agent
-            # Done
             header = message['header']
             if 'method' in header:
                 self.method = header['method']

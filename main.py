@@ -14,8 +14,7 @@ try:
         try:
             proxy_port = int(input("Please enter your proxy port:\n"))
         except ValueError:
-            print("\nPort number entered was not an integer. Please re-try")
-            sys.exit(0)
+            sys.exit("\nPort number entered was not an integer. Please re-try")
 
     method = input("Please enter your desired HTTP method:\n")
     method = method.upper()
@@ -32,10 +31,8 @@ try:
     client = Client(input_address, 80, proxy_addr, proxy_port, fetch_resources=True)
 
 except (TimeoutError, ConnectionRefusedError):
-    print("\nCould not connect to desired proxy server. "
+    sys.exit("\nCould not connect to desired proxy server. "
           "Please re-check your proxy address and/or port number")
-
-    sys.exit(0)
 
 print("Connected")
 

@@ -1,11 +1,9 @@
 from datetime import datetime
-
 from HttpMessage import parse_message
 from HttpMessage import HttpMessage
 
 
 class HttpResponse(HttpMessage):
-
     def __init__(self, response=""):
         """
         Creates a HttpResponse with default properties,
@@ -19,11 +17,15 @@ class HttpResponse(HttpMessage):
         self.status_code = 200
         self.reason = "OK"
         self.connection = 'keep-alive'
-        self.date = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT")
+        self.date = datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT")
         self.location = ""
         self.content_type = ""
         self.content_length = 0
         self.content = b""
+        self.last_mod = ''
+        self.expires = ''
+        self.cache_control = ''
+        self.server = ''
 
         if response:
             # response bytearray was provided. Need to parse it
@@ -36,7 +38,6 @@ class HttpResponse(HttpMessage):
                 self.content = message['content']
 
             # check if the relevant header fields are present in the message
-            # TODO: add more header fields eg User-Agent
             header = message['header']
             if 'http_version' in header:
                 self.http_version = header['http_version']
@@ -54,8 +55,14 @@ class HttpResponse(HttpMessage):
                 self.location = header['location']
             if 'last-modified' in header:
                 self.last_mod = header['last-modified']
+            if 'expires' in header:
+                self.expires = header['expires']
             if 'content-type' in header:
                 self.content_type = header['content-type']
+            if 'cache-control' in header:
+                self.cache_control = header['cache-control']
+            if 'server' in header:
+                self.server = header['server']
 
     def gen_message(self):
         """
@@ -68,17 +75,33 @@ class HttpResponse(HttpMessage):
         req_str += "Date: {0}\r\n".format(self.date)
 
         # TODO: add more fields such as Accepts and content
+
+        if self.last_mod:
+            req_str += "Last-Modified: {0}\r\n".format(self.last_mod)
+
+        if self.expires:
+            req_str += "Expires: {0}\r\n".format(self.expires)
+
         if self.connection:
             req_str += "Connection: {0}\r\n".format(self.connection)
-        if self.location:
-            req_str += "Location: {0}\r\n".format(self.location)
+
+        if self.cache_control:
+            req_str += "Cache-Control: {0}\r\n".format(self.cache_control)
+
         if self.content_type:
             req_str += "Content-Type: {0}\r\n".format(self.content_type)
+
+        if self.server:
+            req_str += "Server: {0}\r\n".format(self.server)
+
+        if self.location:
+            req_str += "Location: {0}\r\n".format(self.location)
 
         if self.content_length:
             req_str += "Content-Length: {0}\r\n".format(self.content_length)
         elif self.content:
             req_str += "Content-Length: {0}\r\n".format(len(self.content))
+
 
         req_str += "\r\n"
         req_bytes = bytearray(req_str, 'utf-8')

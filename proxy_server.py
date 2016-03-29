@@ -23,7 +23,6 @@ class proxy_server_thread(threading.Thread):
     def run(self):
         while True:
             try:
-                print("\n***RECEIVED CONNECTION FROM CLIENT***.\n")
                 # Receive request from client
                 req = recv_message(self.socket)
                 print('\nThe received request is:\n' + str(req.gen_message(),'UTF-8'))
@@ -32,8 +31,8 @@ class proxy_server_thread(threading.Thread):
                 handler = self.RequestHandlerClass(req, static_dir=self.static_dir)
                 response = handler.handle()
 
-                print("This is the handler response:")
-                print(str(response.gen_message(), 'UTF-8'))
+                print("This is the response:")
+                print(response.gen_message())
                 # if the client requested persistent connections, and they are
                 # allowed, then return Connection: keep-alive
                 connection = req.connection if self.allow_persistent else "close"
@@ -73,7 +72,8 @@ class proxy_server:
             while True:
                 clientsocket, clientaddr = self.socket.accept()
                 print("Connected: {0}".format(clientaddr))
-                ct = ServerThread(clientsocket,RequestHandlerClass=ProxyRequestHandler, allow_persistent=True)
+                print("\n***RECEIVED CONNECTION FROM CLIENT***.\n")
+                ct = proxy_server_thread(clientsocket,RequestHandlerClass=ProxyRequestHandler, allow_persistent=True)
                 ct.start()
 
         except KeyboardInterrupt:
