@@ -35,6 +35,12 @@ def get_relative_url(url):
         rel_url = url[first_slash:]
     return rel_url
 
+def get_proxy_compat_url(host, url, proxy_address):
+        if proxy_address:
+            return "http://" + host + url
+        else:
+            return url
+
 
 class Client:
 
@@ -42,42 +48,47 @@ class Client:
         self.host = get_host(adjust_address(address))
         self.url = get_url(adjust_address(address), self.host)
         self.port = port
+        self.proxy_address = proxy_address
+        self.proxy_port = proxy_port
         self.fetch_resources = fetch_resources
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if proxy_address == '':
-            self.socket.connect((self.host, port))
-        else:
-            self.socket.connect((proxy_address, proxy_port))
 
-    def reset_connection(self, address, port):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.reset_connection()
+
+    def reset_connection(self):
         self.socket.close()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((address, port))
+        if self.proxy_address:
+            self.socket.connect((self.proxy_address, self.proxy_port))
+        else:
+            self.socket.connect((self.host, self.port))
 
     def save_all_resources(self, resource_urls):
         for resource in resource_urls:
-            # send request for resource
-            # receive file
-            # save somewhere
             if not resource.startswith("http://"):
                 continue
 
             print("Fetching: ", resource)
+            host = get_host(adjust_address(resource))
+            uri = get_relative_url(adjust_address(resource))
+            uri = get_proxy_compat_url(host, uri, self.proxy_address)
+
             req = HttpRequest.HttpRequest()
-            req.host = get_host(adjust_address(resource))
-            req.uri = get_relative_url(adjust_address(resource))
+            req.host = host
+            req.uri = uri
             self.socket.sendall(req.gen_message())
+
             resource_response = recv_response(self.socket)
             filename = hashlib.sha1(
                 resource_response.content).hexdigest()
             with open("temp/" + filename, "wb") as f:
                 f.write(resource_response.content)
             if resource_response.connection == "close":
-                self.reset_connection(self.host, self.port)
+                self.reset_connection()
 
     def request(self, request):
         request.host = self.host
-        request.uri = self.url
+        request.uri = get_proxy_compat_url(self.host, self.url, self.proxy_address)
         self.socket.sendall(request.gen_message())
         response = recv_response(self.socket)
 
@@ -86,21 +97,23 @@ class Client:
             print("Redirecting to: " + response.location)
             redirect_addr = adjust_address(response.location)
             self.host = get_host(redirect_addr)
+            self.url = get_url(redirect_addr, get_host(redirect_addr))
+
             req = HttpRequest.HttpRequest()
-            req.uri = get_url(redirect_addr, get_host(redirect_addr))
             req.host = self.host
-            print(redirect_addr)
+            req.uri = get_proxy_compat_url(self.host, self.url, self.proxy_address)
             req.method = request.method
             # TODO: HttpRequest copy constructor
             print(req.gen_message())
 
-            self.reset_connection(get_host(redirect_addr), self.port)
+            if response.connection == "close":
+                self.reset_connection()
             self.socket.sendall(req.gen_message())
             response = recv_response(self.socket)
 
-        if response.connection == "close":
-            self.reset_connection(self.host, self.port)
         if "text/html" in response.content_type and self.fetch_resources:
+            if response.connection == "close":
+                self.reset_connection()
             parser = ResourceHTMLParser()
             resources = parser.extract_resource_urls(str(response.content, "ISO-8859-1"))
             print("RESOURCES", resources)

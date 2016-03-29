@@ -1,9 +1,10 @@
 import re
+import urllib.parse
 
 
 class HttpMessage:
 
-    def gen_message():
+    def gen_message(self):
         pass
 
 
@@ -16,7 +17,7 @@ class BadRequestError(Exception):
 # regexs used for finding start/status line and extracting its fields
 # uses regex/python named groups
 request_regex = re.compile(
-    u'^(?P<method>[A-Z]+) (?P<uri>/.*) (?P<version>HTTP/\d\.\d)')
+    u'^(?P<method>[A-Z]+) (?P<uri>.*) (?P<version>HTTP/\d\.\d)')
 response_regex = re.compile(
     u'^(?P<version>HTTP/\d\.\d) (?P<code>\d{3}) (?P<reason>.+)')
 
@@ -61,7 +62,22 @@ def parse_message(data):
     if req_match:
         # message is a request
         message['header']['method'] = req_match.group('method')
-        message['header']['uri'] = req_match.group('uri')
+
+        # This is required because when a client makes a request
+        # through a proxy, the requestURL must be a full URL
+        # so that the proxy knows what host to use
+        parsed_url = urllib.parse.urlsplit(req_match.group('uri'))
+        if parsed_url.scheme and not parsed_url.scheme == "http":
+            raise BadRequestError()
+        # make relative url from parsed_url by leaving out scheme and netloc
+        message['header']['uri'] = urllib.parse.urlunsplit(('', '',
+                                                            parsed_url.path,
+                                                            parsed_url.query,
+                                                            parsed_url.fragment))
+        if not message['header']['uri']:
+            raise BadRequestError()
+        message['header']['host'] = parsed_url.netloc
+
         message['header']['http_version'] = req_match.group('version')
     elif res_match:
         # message is a response

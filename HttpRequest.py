@@ -13,7 +13,7 @@ class HttpRequest(HttpMessage):
         """
         self.method = 'GET'
         self.host = ''
-        self.uri = ''
+        self.uri = '/'
         self.http_version = 'HTTP/1.0'
         self.connection = 'keep-alive'
         self.user_agent = 'curl/7.40.0'
