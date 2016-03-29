@@ -1,10 +1,8 @@
 import socket
 import HttpRequest
 from socket_utils import recv_response
-import sys
 from ResourceHTMLParser import ResourceHTMLParser
 import hashlib
-import os.path
 
 
 def adjust_address(address):
@@ -70,9 +68,8 @@ class Client:
             req.uri = get_relative_url(adjust_address(resource))
             self.socket.sendall(req.gen_message())
             resource_response = recv_response(self.socket)
-            filename, extension = os.path.splitext(resource)
             filename = hashlib.sha1(
-                resource_response.content).hexdigest() + extension
+                resource_response.content).hexdigest()
             with open("temp/" + filename, "wb") as f:
                 f.write(resource_response.content)
             if resource_response.connection == "close":
