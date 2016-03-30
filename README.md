@@ -10,7 +10,7 @@ Implemented:
 * Persistent and non-persistent connections
 * Receive arbitrary length requests
 * Serving static files from a directory
-* POST, PUT, DELETE requests
+* GET, HEAD, POST, PUT, DELETE requests
 
 Not yet implemented:
 * HTTP/1.1
@@ -34,18 +34,43 @@ Once the server is running, go to localhost:8000/index.html (or whatever address
 ## HTTP Client
 ### Features
 Implemented:
+* Persistent and non-persistent connections
+* Receive arbitrary length requests
+* Perform requests through proxy server (no authentication)
+* GET, HEAD, POST, PUT, DELETE requests
+* Conditional GET
+* Download all images on page (by parsing HTML)
+* Redirection
 
 Not yet implemented:
+* HTTP/1.1
+* HTTPS
+* GUI front-end
 
 ### How to use it
+
+
+The client has been tested with the following websites:
+* [Loot](http://www.loot.co.za)
+* [Amazon](http://www.amazon.com)
+* [Takealot](http://www.takealot.com)
+* [Wits](http://www.wits.ac.za)
+* [Stackoverflow](http://stackoverflow.com)
+* [Copernica](http://www.copernica.com)
+* [Post Test Server](http://www.posttestserver.com/post.php)
+* Our custom HTTP server
 
 
 
 ## HTTP Proxy
 ### Features
 Implemented:
+* Caching
+* Conditional GET
 
 Not yet implemented:
+* HTTP/1.1
+* HTTPS
 
 ### How to use it
 1. `proxyServer = proxy_server(IP, 80)` Replace IP with the server's desired IP address
