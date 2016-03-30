@@ -9,7 +9,7 @@ def check_if_cache_fresh(request, mod_since, cache):
 
     if found:
         if mod_since == '':
-            timestamp = datetime.now()
+            timestamp = datetime.utcnow()
         else:
             timestamp = mod_since
 
@@ -46,13 +46,13 @@ def save_in_cache(request, server_response, cache):
         # Check if it has a last modified header
         last_mod_date = datetime.strptime(server_response.last_mod, '%a, %d %b %Y %H:%M:%S GMT')
     else:
-        last_mod_date = datetime.now()
+        last_mod_date = datetime.utcnow()
 
     if server_response.expires and server_response.expires != '-1':
         # Check if it has an expiry header
         expiry_date = datetime.strptime(server_response.expires, '%a, %d %b %Y %H:%M:%S GMT')
 
-        if expiry_date > (datetime.now()):
+        if expiry_date > (datetime.utcnow()):
             to_save_in_cache = 1
         else:
             # If expiry date is before present date, don't save

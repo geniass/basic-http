@@ -39,7 +39,7 @@ try:
         last_mod = datetime.strptime('01/01/1000', '%d/%m/%Y')
 
 
-    client = Client(input_address, 80, proxy_addr, proxy_port, fetch_resources=False)
+    client = Client(input_address, 80, proxy_addr, proxy_port, fetch_resources=True)
 
 except (TimeoutError, ConnectionRefusedError):
     sys.exit("\nCould not connect to desired proxy server. "
