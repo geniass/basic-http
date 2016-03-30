@@ -17,13 +17,13 @@ class ProxyRequestHandler:
 
     def handle(self):
         method = self.request.method
-        if method == "GET" or method == "HEAD" or method == "DELETE":
-            return self.handle_get_head_delete()
+        if method == "GET" or method == "HEAD":
+            return self.handle_get_head()
         elif method == 'CONDGET':
             self.request.method = 'CONDITIONAL GET'
             return self.handle_get_cond_get()
-        elif method == "POST" or method == "PUT":
-            return self.handle_post_put()
+        elif method == "POST" or method == "PUT" or method == "DELETE":
+            return self.handle_post_put_delete()
         return self.response
 
     def handle_get_cond_get(self):
@@ -60,7 +60,7 @@ class ProxyRequestHandler:
             self.response.reason = "Not Modified"
             return self.response
 
-    def handle_get_head_delete(self):
+    def handle_get_head(self):
         db = dataset.connect('sqlite:///cache.db')
         cache = db['user']
 
@@ -92,13 +92,13 @@ class ProxyRequestHandler:
             self.response.reason = "OK"
             return self.response
 
-    def handle_post_put(self):
+    def handle_post_put_delete(self):
         print("Please note: The "+self.request.method+" method does not allow caching")
         input_address = self.request.host + self.request.uri
         # print("Input Address: " + input_address)
 
         print('\n***MAKING REQUEST FOR CLIENT...***\n')
-        prox_client = Client(input_address, 80, '', 0)
+        prox_client = Client(input_address, 8000, '', 0)
         self.response = prox_client.request(self.request)
 
         return self.response
