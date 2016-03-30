@@ -44,10 +44,9 @@ class ProxyRequestHandler:
             print(request_status + '\n\n')
 
             input_address = self.request.host + self.request.uri
-            print("Input Address: " + input_address)
 
             print('\n***MAKING REQUEST FOR CLIENT...***\n')
-            prox_client = Client(input_address, 80, '', 0)
+            prox_client = Client(input_address, 8000, '', 0)
             self.response = prox_client.request(self.request)
 
             # Made request again, now save in cache, IF cache-able
@@ -77,10 +76,9 @@ class ProxyRequestHandler:
             print(request_status + '\n\n')
 
             input_address = self.request.host + self.request.uri
-            print("Input Address: " + input_address)
 
             print('\n***MAKING REQUEST FOR CLIENT...***\n')
-            prox_client = Client(input_address, 80, '', 0)
+            prox_client = Client(input_address, 8000, '', 0)
             self.response = prox_client.request(self.request)
 
             # Made request again, now save in cache, IF cache-able

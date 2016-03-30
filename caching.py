@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 import HttpResponse
 
 def check_if_cache_fresh(request, mod_since, cache):
-
     dummy_time = datetime.strptime("01 01 1000 00:00:00", '%d %m %Y %H:%M:%S')
     found = cache.find_one(request=request)
 
@@ -26,14 +25,14 @@ def check_if_cache_fresh(request, mod_since, cache):
                 return "Outdated cache entry. Requesting again"
 
         # Else if there is an expiry date, compare it to your date
-        elif found['expiry'] != dummy_time:
+        else:
             if found['expiry'] > timestamp:
                 print("Found in cache! Returning cached response.\n\n")
                 return found['page']
-        else:
-            # Else the found entry is outdated and url must be requested again
-            cache.delete(request=request)
-            return "Outdated cache entry. Requesting again"
+            else:
+                # Else the found entry is outdated and url must be requested again
+                cache.delete(request=request)
+                return "Outdated cache entry. Requesting again"
 
     else:
         return "Request not found in cache"
@@ -58,7 +57,7 @@ def save_in_cache(request, server_response, cache):
             # If expiry date is before present date, don't save
             to_save_in_cache = 0
 
-        if server_response.last_mod and (last_mod_date + timedelta(minutes = 10) > expiry_date):
+        if last_mod_date + timedelta(minutes = 1) > expiry_date:
             # If it expires within 10 minutes of modification, don't save
             to_save_in_cache = 0
 

@@ -17,7 +17,7 @@ class HttpResponse(HttpMessage):
         self.status_code = 200
         self.reason = "OK"
         self.connection = 'keep-alive'
-        self.date = datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT")
+        self.date = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT")
         self.location = ""
         self.content_type = ""
         self.content_length = 0
