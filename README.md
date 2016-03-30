@@ -10,7 +10,9 @@ Implemented:
 * Persistent and non-persistent connections
 * Receive arbitrary length requests
 * Serving static files from a directory
-* GET, HEAD, POST, PUT, DELETE requests
+* GET, HEAD, POST, PUT, DELETE responses
+* Demo web pages (/index.html and /content.html)
+* Accessible by other hosts on the network
 
 Not yet implemented:
 * HTTP/1.1
@@ -67,6 +69,9 @@ The client has been tested with the following websites:
 Implemented:
 * Caching
 * Conditional GET
+* Persistent and non-persistent connections
+* Multithreading
+* Accessible by other hosts on the network
 
 Not yet implemented:
 * HTTP/1.1
