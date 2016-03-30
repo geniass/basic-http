@@ -38,12 +38,19 @@ class ServerRequestHandler:
             self.response.location = "/index.html"
             self.response.content = bytes(
                 '<html><body><a href="/index.html"></a></body></html>', 'utf-8')
-
             return self.response
+
+        if '/coffee' in self.request.uri:
+            self.response.status_code = 418
+            self.response.reason = "I'm a teapot"
+            self.response.content = (self.static_dir / "teapot.html").open(mode="rb").read()
+            return self.response
+
         if not norm_path.match(str(self.static_dir) + "/*"):
             # client tried to access a path outside of static_dir!
             self.response.status_code = 403
-            self.response.reason = "Forbidden. Don't even try"
+            self.response.reason = "Forbidden"
+            self.response.content = (self.static_dir / "403.html").open(mode="rb").read()
         elif norm_path.is_file():
             # send the file
             self.response.content = norm_path.open(mode='rb').read()
@@ -53,6 +60,7 @@ class ServerRequestHandler:
         else:
             self.response.status_code = 404
             self.response.reason = "Not found"
+            self.response.content = (self.static_dir / "404.html").open(mode="rb").read()
 
         return self.response
 
