@@ -15,7 +15,7 @@ class HttpRequest(HttpMessage):
         self.host = ''
         self.uri = '/'
         self.http_version = 'HTTP/1.0'
-        self.connection = 'keep-alive'
+        self.connection = 'close'
         self.user_agent = 'curl/7.40.0'
         self.accept_lang = 'en-GB,en;q=0.5'
         self.accept_encoding = ''
