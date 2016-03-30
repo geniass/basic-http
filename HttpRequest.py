@@ -41,8 +41,8 @@ class HttpRequest(HttpMessage):
                 self.host = header['host']
             if 'uri' in header:
                 self.uri = header['uri']
-            if 'http_version' in header:
-                self.http_version = header['http_version']
+            # if 'http_version' in header:
+            #     self.http_version = header['http_version']
             if 'content-length' in header:
                 self.content_length = int(header['content-length'])
             if 'connection' in header:
@@ -51,8 +51,8 @@ class HttpRequest(HttpMessage):
                 self.user_agent = header['user_agent']
             if 'accept_lang' in header:
                 self.accept_lang = header['accept-lang']
-            if 'accept-encoding' in header:
-                self.accept_encoding = header['accept-encoding']
+            # if 'accept-encoding' in header:
+            #     self.accept_encoding = header['accept-encoding']
             if 'if-modified-since' in header:
                 self.if_mod_since = header['if-modified-since']
 
