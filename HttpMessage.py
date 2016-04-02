@@ -82,7 +82,8 @@ def parse_message(data):
                                                             parsed_url.fragment))
         if not message['header']['uri']:
             raise BadRequestError()
-        message['header']['host'] = parsed_url.netloc
+        # ignore port
+        message['header']['host'] = parsed_url.netloc.split(":")[0]
 
         message['header']['http_version'] = req_match.group('version')
     elif res_match:

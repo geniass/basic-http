@@ -53,12 +53,18 @@ class ServerRequestHandler:
             self.response.reason = "Forbidden"
             self.response.content = (self.static_dir / "403.html").open(mode="rb").read()
         elif norm_path.is_file():
-            # send the file
-            self.response.content = norm_path.open(mode='rb').read()
-            self.response.status_code = 200
-            self.response.reason = "OK"
-            self.response.last_mod = datetime.strptime('01/04/2016', '%d/%m/%Y')
-            self.response.last_mod = self.response.last_mod.strftime("%a, %d %b %Y %H:%M:%S GMT")
+            last_modified = datetime.fromtimestamp(norm_path.stat().st_mtime).replace(microsecond=0)
+            if_mod_since = datetime.strptime(self.request.if_mod_since, "%a, %d %b %Y %H:%M:%S GMT") if self.request.if_mod_since else datetime.utcnow()
+            if if_mod_since < last_modified:
+                # send the file
+                self.response.content = norm_path.open(mode='rb').read()
+                self.response.status_code = 200
+                self.response.reason = "OK"
+                self.response.last_mod = last_modified.strftime("%a, %d %b %Y %H:%M:%S GMT")
+                print(self.response.last_mod)
+            else:
+                self.response.status_code = 304
+                self.response.reason = "Not modified"
         else:
             self.response.status_code = 404
             self.response.reason = "Not found"
