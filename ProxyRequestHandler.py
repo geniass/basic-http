@@ -19,46 +19,9 @@ class ProxyRequestHandler:
         method = self.request.method
         if method == "GET" or method == "HEAD":
             return self.handle_get_head()
-        elif method == 'CONDGET':
-            self.request.method = 'CONDITIONAL GET'
-            return self.handle_get_cond_get()
         elif method == "POST" or method == "PUT" or method == "DELETE":
             return self.handle_post_put_delete()
         return self.response
-
-    def handle_get_cond_get(self):
-        db = dataset.connect('sqlite:///cache.db')
-        cache = db['user']
-
-        if_mod_since = datetime.strptime(self.request.if_mod_since, '%a, %d %b %Y %H:%M:%S GMT')
-
-        request_key = "GET " + self.request.uri + " " + self.request.http_version + \
-                      "\nHost: " + self.request.host
-
-        request_status = caching.check_if_cache_fresh(request_key,if_mod_since,cache)
-
-        # If not in cache, or object in cache is outdated, make request again
-        if request_status == 'Request not found in cache' or \
-                        request_status == 'Outdated cache entry. Requesting again':
-
-            print(request_status + '\n\n')
-
-            input_address = self.request.host + self.request.uri
-
-            print('\n***MAKING REQUEST FOR CLIENT...***\n')
-            prox_client = Client(input_address, 8000, '', 0)
-            self.response = prox_client.request(self.request)
-
-            # Made request again, now save in cache, IF cache-able
-            caching.save_in_cache(request_key, self.response, cache)
-
-            return self.response
-
-        else:
-            self.response = HttpResponse.HttpResponse(request_status)
-            self.response.status_code = 304
-            self.response.reason = "Not Modified"
-            return self.response
 
     def handle_get_head(self):
         db = dataset.connect('sqlite:///cache.db')
@@ -67,18 +30,16 @@ class ProxyRequestHandler:
         request_key = self.request.method + " " + self.request.uri + " " + self.request.http_version + \
                       "\nHost: " + self.request.host
 
-        request_status = caching.check_if_cache_fresh(request_key,'',cache)
+        request_status = caching.check_if_cache_fresh(request_key,cache)
 
         # If not in cache, or object in cache is outdated, make request again
-        if request_status == 'Request not found in cache' or \
-                        request_status == 'Outdated cache entry. Requesting again':
+        if request_status['status'] == 'Request not found in cache' or \
+                        request_status['status'] == 'Outdated cache entry. Requesting again':
 
-            print(request_status + '\n\n')
-
+            print(request_status['status'] + '\n\n')
             input_address = self.request.host + self.request.uri
-
             print('\n***MAKING REQUEST FOR CLIENT...***\n')
-            prox_client = Client(input_address, 8000, '', 0)
+            prox_client = Client(input_address, 80, '', 0)
             self.response = prox_client.request(self.request)
 
             # Made request again, now save in cache, IF cache-able
@@ -86,19 +47,31 @@ class ProxyRequestHandler:
 
             return self.response
 
+        elif request_status['status'] == "Found in cache. But no expiry or max-age. Make conditional get request":
+            print(request_status['status'] + '\n\n')
+            input_address = self.request.host + self.request.uri
+            self.request.if_mod_since = request_status['last_mod']
+            print('\n***MAKING CONDITIONAL GET...***\n')
+            prox_client = Client(input_address, 80, '', 0)
+            self.response = prox_client.request(self.request)
+            caching.save_in_cache(request_key, self.response, cache)
+
+            return self.response
+
         else:
-            self.response = HttpResponse.HttpResponse(request_status)
-            self.response.status_code = 200
-            self.response.reason = "OK"
+            print(request_status['status'] + '\n\n')
+            self.response = HttpResponse.HttpResponse(request_status['page'])
+            if self.request.if_mod_since:
+                self.response.status_code = 304
+                self.response.reason = "Not Modified"
             return self.response
 
     def handle_post_put_delete(self):
         print("Please note: The "+self.request.method+" method does not allow caching")
         input_address = self.request.host + self.request.uri
-        # print("Input Address: " + input_address)
 
         print('\n***MAKING REQUEST FOR CLIENT...***\n')
-        prox_client = Client(input_address, 8000, '', 0)
+        prox_client = Client(input_address, 80, '', 0)
         self.response = prox_client.request(self.request)
 
         return self.response

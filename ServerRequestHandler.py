@@ -56,7 +56,8 @@ class ServerRequestHandler:
             self.response.content = norm_path.open(mode='rb').read()
             self.response.status_code = 200
             self.response.reason = "OK"
-            self.response.expires = (datetime.utcnow() + timedelta(minutes = 2)).strftime("%a, %d %b %Y %H:%M:%S GMT")
+            self.response.last_mod = datetime.strptime('01/04/2016', '%d/%m/%Y')
+            self.response.last_mod = self.response.last_mod.strftime("%a, %d %b %Y %H:%M:%S GMT")
         else:
             self.response.status_code = 404
             self.response.reason = "Not found"

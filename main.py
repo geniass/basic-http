@@ -39,7 +39,7 @@ try:
         last_mod = datetime.strptime('01/01/1000', '%d/%m/%Y')
 
 
-    client = Client(input_address, 8000, proxy_addr, proxy_port, fetch_resources=True)
+    client = Client(input_address, 80, proxy_addr, proxy_port, fetch_resources=True)
 
 except (TimeoutError, ConnectionRefusedError):
     sys.exit("\nCould not connect to desired proxy server. "
@@ -50,7 +50,9 @@ print("Connected")
 req = HttpRequest.HttpRequest()
 req.method = method
 req.content = bytes(content, 'UTF-8')
-req.if_mod_since = last_mod.strftime("%a, %d %b %Y %H:%M:%S GMT")
+if method == 'CONDGET':
+    req.if_mod_since = last_mod.strftime("%a, %d %b %Y %H:%M:%S GMT")
+    req.method = 'GET'
 reply = client.request(req)
 
 print(reply.gen_message())

@@ -22,7 +22,6 @@ class proxy_server:
         except KeyboardInterrupt:
             self.socket.shutdown(socket.SHUT_RDWR)
 
-
 if __name__ == '__main__':
     proxy_Server = proxy_server("0.0.0.0", 7000)
     proxy_Server.run()

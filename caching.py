@@ -2,43 +2,43 @@ import dataset
 from datetime import datetime, timedelta
 import HttpResponse
 
-def check_if_cache_fresh(request, mod_since, cache):
+def check_if_cache_fresh(request, cache):
     dummy_time = datetime.strptime("01 01 1000 00:00:00", '%d %m %Y %H:%M:%S')
     found = cache.find_one(request=request)
 
     if found:
-        if mod_since == '':
-            timestamp = datetime.utcnow()
-        else:
-            timestamp = mod_since
+        user_date = datetime.utcnow()
 
         # Found request in cache
-        # If there's no expiry date, check that the last-modified date is still valid
-        if found['expiry'] == dummy_time:
-            check = found['last_mod'] + timedelta(seconds = found['max-age'])
-            if timestamp < check and timestamp > found['last-mod']:
-                print("Found in cache! Returning cached result.")
-                return found['page']
+        # If there's no expiry date, but there is a max-age, check that the cache is still fresh
+        if found['expiry'] == dummy_time and found['max_age'] != 0:
+            check = found['last_mod'] + timedelta(seconds = found['max_age'])
+            if user_date < check and user_date > found['last_mod']:
+                return dict(status = "Found in cache! Returning cached result.",page=found['page'])
             else:
                 # Else the found entry is outdated and url must be requested again
                 cache.delete(request=request)
-                return "Outdated cache entry. Requesting again"
+                return dict(status = "Outdated cache entry. Requesting again", page='',last_mod='')
+
+        # Else if there's not an expiry header nor a max-age header, make conditional get
+        elif found['expiry'] == dummy_time and found['max_age'] == 0:
+            return dict(status = "Found in cache. But no expiry or max-age. Make conditional get request",page='',
+                        last_mod = found['last_mod'])
 
         # Else if there is an expiry date, compare it to your date
         else:
-            if found['expiry'] > timestamp:
-                print("Found in cache! Returning cached response.\n\n")
-                return found['page']
+            if found['expiry'] > user_date:
+                return dict(status = "Found in cache! Returning cached result.",page=found['page'])
             else:
                 # Else the found entry is outdated and url must be requested again
                 cache.delete(request=request)
-                return "Outdated cache entry. Requesting again"
+                return dict(status = "Outdated cache entry. Requesting again", page='',last_mod='')
 
     else:
-        return "Request not found in cache"
+        return dict(status = "Request not found in cache", page='',last_mod='')
 
 def save_in_cache(request, server_response, cache):
-    to_save_in_cache = 0
+    to_save_in_cache = 1
     dummy_time = datetime.strptime("01 01 1000 00:00:00", '%d %m %Y %H:%M:%S')
 
     if server_response.last_mod:
@@ -68,7 +68,6 @@ def save_in_cache(request, server_response, cache):
     if server_response.cache_control and (server_response.cache_control.find("no-cache") > -1):
         to_save_in_cache = 0
 
-
     if to_save_in_cache == 1:
 
         if server_response.cache_control and server_response.cache_control.startswith('max-age'):
@@ -76,8 +75,8 @@ def save_in_cache(request, server_response, cache):
             max_age = server_response.cache_control[(server_response.cache_control.find('max-age=')+8):]
             max_age = max_age[:max_age.find(',')]
         else:
-            # Default age not specified by server. Set default to 1 week; 86400 seconds = 1 week.
-            max_age = 86400
+            # Default age not specified by server.
+            max_age = 0
 
         print('\nThis page can be cached. Saving cache now.\n')
         # Store in cache database

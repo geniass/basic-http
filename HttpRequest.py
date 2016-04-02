@@ -62,8 +62,7 @@ class HttpRequest(HttpMessage):
         Uses the data contained in this HttpRequest instance
         :return: Http request message as a bytearray
         """
-        if self.method == 'CONDITIONAL GET':
-            self.method = 'GET'
+
         if self.method:
             req_str = self.method + ' '
         if self.uri:
