@@ -73,12 +73,10 @@ class Client:
 
     def request_and_redirect(self, request):
         request.connection = "keep-alive" if self.allow_persistent else "close"
-        print(request.gen_message())
         self.socket.sendall(request.gen_message())
         response = recv_response(self.socket)
 
         while response.status_code in (301, 302):
-            print(response.gen_message())
             print("Redirecting to: " + response.location)
             redirect_addr = adjust_address(response.location)
             host = get_host(redirect_addr)
@@ -90,7 +88,6 @@ class Client:
             req.method = request.method
             request.connection = "keep-alive" if self.allow_persistent else "close"
             # TODO: HttpRequest copy constructor
-            print(req.gen_message())
 
             if response.connection == "close" or not self.allow_persistent:
                 self.reset_connection()

@@ -8,8 +8,9 @@ import dataset
 
 class ProxyRequestHandler:
 
-    def __init__(self, request, static_dir="./static"):
+    def __init__(self, request, port=80, static_dir="./static"):
         self.request = request
+        self.port = port
         self.static_dir = Path(static_dir).resolve()
         self.response = HttpResponse.HttpResponse()
         self.response.status_code = 400
@@ -38,8 +39,9 @@ class ProxyRequestHandler:
 
             print(request_status['status'] + '\n\n')
             input_address = self.request.host + self.request.uri
-            print('\n***MAKING REQUEST FOR CLIENT...***\n')
-            prox_client = Client(input_address, 80, '', 0)
+
+            print('***MAKING REQUEST FOR CLIENT...***\n')
+            prox_client = Client(input_address, self.port, '', 0)
             self.response = prox_client.request(self.request)
 
             # Made request again, now save in cache, IF cache-able
@@ -50,9 +52,9 @@ class ProxyRequestHandler:
         elif request_status['status'] == "Found in cache. But no expiry or max-age. Make conditional get request":
             print(request_status['status'] + '\n\n')
             input_address = self.request.host + self.request.uri
-            self.request.if_mod_since = request_status['last_mod']
-            print('\n***MAKING CONDITIONAL GET...***\n')
-            prox_client = Client(input_address, 80, '', 0)
+
+            print('***MAKING REQUEST FOR CLIENT...***\n')
+            prox_client = Client(input_address, self.port, '', 0)
             self.response = prox_client.request(self.request)
             caching.save_in_cache(request_key, self.response, cache)
 
@@ -70,8 +72,8 @@ class ProxyRequestHandler:
         print("Please note: The "+self.request.method+" method does not allow caching")
         input_address = self.request.host + self.request.uri
 
-        print('\n***MAKING REQUEST FOR CLIENT...***\n')
-        prox_client = Client(input_address, 80, '', 0)
+        print('***MAKING REQUEST FOR CLIENT...***\n')
+        prox_client = Client(input_address, self.port, '', 0)
         self.response = prox_client.request(self.request)
 
         return self.response

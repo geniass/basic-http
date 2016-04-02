@@ -3,8 +3,14 @@ import urllib.parse
 
 
 class HttpMessage:
-
+    """
+    Abstract Base class representing any HTTP message
+    """
     def gen_message(self):
+        """
+        Generate bytearray representation of the HttpMessage
+        :return: bytearray HTTP message
+        """
         pass
 
 
@@ -94,5 +100,4 @@ def parse_message(data):
         if k not in message['header']:
             message['header'][k] = v.strip()
 
-    print(message)
     return message

@@ -30,10 +30,10 @@ def recv_header(sock_file):
     return header
 
 
-def recv_message(socket, HttpMessageClass=HttpRequest.HttpRequest):
+def recv_message(socket, HttpMessageClass):
     """
-    Receives a HTTP message from sock
-    :param sock: socket to read from
+    Receives a HTTP message from socket
+    :param socket: socket to read from
     :param HttpMessageClass: the class of the type of message to receive
     (HttpRequest or HttpResponse)
     :return: HttpMessageClass object with headers and content (if present)
@@ -54,9 +54,19 @@ def recv_message(socket, HttpMessageClass=HttpRequest.HttpRequest):
         return message
 
 
-def recv_response(socket):
-    return recv_message(socket, HttpMessageClass=HttpResponse.HttpResponse)
+def recv_response(socket) -> HttpResponse:
+    """
+    Receive a HttpResponse from socket
+    :param socket: socket to read from
+    :return: HttpResponse object
+    """
+    return recv_message(socket, HttpResponse.HttpResponse)
 
 
-def recv_request(socket):
-    return recv_message(socket, HttpMessageClass=HttpRequest.HttpRequest)
+def recv_request(socket) -> HttpRequest:
+    """
+    Receive a HttpRequest from socket
+    :param socket: socket to read from
+    :return: HttpRequest object
+    """
+    return recv_message(socket, HttpRequest.HttpRequest)

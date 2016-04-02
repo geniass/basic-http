@@ -3,7 +3,7 @@ import threading
 import sys
 from pathlib import Path
 
-from socket_utils import recv_message
+from socket_utils import recv_request
 
 import HttpResponse
 from HttpMessage import BadRequestError
@@ -12,7 +12,7 @@ from ServerRequestHandler import ServerRequestHandler
 
 class ServerThread(threading.Thread):
 
-    def __init__(self, s, RequestHandlerClass=ServerRequestHandler, allow_persistent=True, static_dir="./static"):
+    def __init__(self, s, RequestHandlerClass, allow_persistent=True, static_dir="./static"):
         super(ServerThread, self).__init__()
         self.socket = s
         self.RequestHandlerClass = RequestHandlerClass
@@ -22,17 +22,13 @@ class ServerThread(threading.Thread):
     def run(self):
         while True:
             try:
-                req = recv_message(self.socket)
+                req = recv_request(self.socket)
                 print('\nThe received request is:\n' + str(req.gen_message(),'UTF-8'))
 
                 handler = self.RequestHandlerClass(req, static_dir=self.static_dir)
                 response = handler.handle()
 
-                # Sorry about all this printing, I just like to see what's happening in the program
-                # Remember to remove these comments once you've read them :P
-
-                print("This is the response:")
-                print(response.gen_message())
+                print("Response for", req.host, req.uri, response.status_code)
 
                 # if the client requested persistent connections, and they are
                 # allowed, then return Connection: keep-alive
@@ -53,6 +49,7 @@ class ServerThread(threading.Thread):
                 response.reason = "Bad request"
                 self.socket.sendall(response.gen_message())
             except ConnectionError as e:
+                # Client closed the connection, close our side now
                 print(e, file=sys.stderr)
                 break
             except OSError as e:
@@ -60,8 +57,16 @@ class ServerThread(threading.Thread):
 
 
 class Server:
+    """
+    Generic server class that listens on a given port for incoming connections and creates a new thread for each
+    new connection.
+    An instance of RequestHandlerClass is instantiated to process each received request.
+    This class can be used as a regular server, as well as the basis for a proxy server by using a different
+    RequestHandler.
+    """
 
-    def __init__(self, address, port):
+    def __init__(self, address, port, RequestHandlerClass):
+        self.RequestHandlerClass = RequestHandlerClass
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind((address, port))
@@ -72,7 +77,7 @@ class Server:
             while True:
                 clientsocket, clientaddr = self.socket.accept()
                 print("Connected: {0}".format(clientaddr))
-                ct = ServerThread(clientsocket, allow_persistent=True)
+                ct = ServerThread(clientsocket, self.RequestHandlerClass, allow_persistent=True)
                 ct.start()
 
         except KeyboardInterrupt:
@@ -80,5 +85,5 @@ class Server:
 
 
 if __name__ == '__main__':
-    server = Server("0.0.0.0", 8000)
+    server = Server("0.0.0.0", 8000, ServerRequestHandler)
     server.run()
