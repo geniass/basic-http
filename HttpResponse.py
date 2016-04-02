@@ -26,6 +26,7 @@ class HttpResponse(HttpMessage):
         self.expires = ''
         self.cache_control = ''
         self.server = ''
+        self.www_auth = ""
 
         if response:
             # response bytearray was provided. Need to parse it
@@ -63,6 +64,8 @@ class HttpResponse(HttpMessage):
                 self.cache_control = header['cache-control']
             if 'server' in header:
                 self.server = header['server']
+            if 'www-authenticate' in header:
+                self.www_auth = header['www-authenticate']
 
     def gen_message(self):
         """
@@ -96,6 +99,9 @@ class HttpResponse(HttpMessage):
 
         if self.location:
             req_str += "Location: {0}\r\n".format(self.location)
+
+        if self.www_auth:
+            req_str += "WWW-Authenticate: {0}\r\n".format(self.www_auth)
 
         if self.content_length:
             req_str += "Content-Length: {0}\r\n".format(self.content_length)

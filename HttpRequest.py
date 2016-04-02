@@ -25,6 +25,7 @@ class HttpRequest(HttpMessage):
         self.content = b''
         self.content_length = len(self.content)
         self.if_mod_since = ''
+        self.authorization = ""
 
         if request:
             message = parse_message(request)
@@ -55,6 +56,8 @@ class HttpRequest(HttpMessage):
             #     self.accept_encoding = header['accept-encoding']
             if 'if-modified-since' in header:
                 self.if_mod_since = header['if-modified-since']
+            if 'authorization' in header:
+                self.authorization = header['authorization'].split(" ")[1]
 
     def gen_message(self):
         """
@@ -83,6 +86,8 @@ class HttpRequest(HttpMessage):
             req_str += 'Connection: {0}\r\n'.format(self.connection)
         if self.if_mod_since:
             req_str += "If-Modified-Since: {0}\r\n".format(self.if_mod_since)
+        if self.authorization:
+            req_str += "Authorization: Basic {0}\r\n".format(self.authorization)
 
         if (self.method == 'POST') or (self.method == 'PUT'):
             self.content_length = len(self.content)

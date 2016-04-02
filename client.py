@@ -1,10 +1,10 @@
 import socket
-import sys
 import HttpRequest
 from socket_utils import recv_response
 from ResourceHTMLParser import ResourceHTMLParser
 import hashlib
 import sys
+from BasicAuth import encode_auth_string
 
 
 def adjust_address(address):
@@ -126,6 +126,13 @@ class Client:
         response = self.request_and_redirect(request)
         if response.location:
             self.host = get_host(adjust_address(response.location))
+
+        if response.status_code == 401 and response.www_auth:
+            # need to send authentication
+            request.host = self.host
+            request.authorization = encode_auth_string("ThePunisher", "stayD0wn")
+            print(request.authorization)
+            response = self.request_and_redirect(request)
 
         if "text/html" in response.content_type and self.fetch_resources:
             if response.connection == "close" or not self.allow_persistent:

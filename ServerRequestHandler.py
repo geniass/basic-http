@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import datetime, timedelta
 import HttpResponse
+from BasicAuth import decode_auth_string
 
 
 class ServerRequestHandler:
@@ -73,6 +74,28 @@ class ServerRequestHandler:
         return self.response
 
     def handle_post(self):
+        if "/index.html" in self.request.uri:
+            if not self.request.authorization:
+                self.response.status_code = 401
+                self.response.reason = "Unauthorized"
+                self.response.www_auth = 'Basic realm="ELEN4017"'
+                return self.response
+
+            username, password = decode_auth_string(self.request.authorization)
+            print(username,password)
+            if username == "ThePunisher" and password == "stayD0wn":
+                self.response.content = bytes(
+                    "<html><body><p>You authenticated as ThePunsiher. You sent a {0}:</p><br><p>{1}</p></body></html>"
+                    .format(self.request.method, str(self.request.content, "utf-8")), "utf-8")
+                self.response.status_code = 202
+                self.response.reason = "Accepted"
+                return self.response
+            else:
+                self.response.status_code = 403
+                self.response.reason = "Forbidden"
+                self.response.content = b'''<html><body><h1>You are not authorized to view this page!</h1></body></html>'''
+                return self.response
+
         self.response.content = bytes(
             "<html><body><p>You sent a {0}:</p><br><p>{1}</p></body></html>"
             .format(self.request.method, str(self.request.content, "utf-8")), "utf-8")
