@@ -98,11 +98,12 @@ The server has optional arguments:
 ## Main
 We have created a demo program `main.py` in order to test the web browsing application
 ### How to use it 
-1. Run `python3 main.py`
-2. Input your desired proxy IP address
-3. Input the corresponding proxy port number
-4. If you would not like to connect to a proxy server, simply press enter (leaving it blank) when prompted for the proxy IP      address
-5. Making a request:
+1. If you would like to access the localhost, open `python3 main.py,` change the port number in line 26 to 8000, and open        `python3 ProxyRequestHandler.py,` change the port number in line 10 to 8000. For all other web-servers, change the same       two port numbers to 80.   
+2. Run `python3 main.py`
+3. Input your desired proxy IP address
+4. Input the corresponding proxy port number
+5. If you would not like to connect to a proxy server, simply press enter (leaving it blank) when prompted for the proxy IP      address
+6. Making a request:
   * Get request:
     - Use this request when you simply want to retrieve a webpage
     - Enter 'get' as your desired HTTP method (without the quotation marks)
