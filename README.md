@@ -13,6 +13,7 @@ Implemented:
 * GET, HEAD, POST, PUT, DELETE responses
 * Demo web pages (/index.html and /content.html)
 * Accessible by other hosts on the network
+* HTTP Basic Authorization
 
 Not yet implemented:
 * HTTP/1.1
@@ -43,6 +44,7 @@ Implemented:
 * Conditional GET
 * Download all images on page (by parsing HTML)
 * Redirection
+* HTTP Basic Authorization
 
 Not yet implemented:
 * HTTP/1.1
@@ -50,7 +52,14 @@ Not yet implemented:
 * GUI front-end
 
 ### How to use it
+1. `client = Client(address, 80, "localhost", 7000)` Replace address with the desired server's IP address or hostname
+2. Create a new request: `request = HttpRequest()`
+3. Set request headers, e.g.: `request.user_agent = "curl/7.40.0"`
+4. Send the request: `response = client.request(request)`
+5. Do something with the response: `print(response.status_code)`
 
+The client has optional arguments:
+* fetch_resources: if True, the response HTML will be parsed and all <img> tag images will be downloaded
 
 The client has been tested with the following websites:
 * [Loot](http://www.loot.co.za)
