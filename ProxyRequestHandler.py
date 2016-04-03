@@ -5,7 +5,6 @@ import HttpResponse
 import caching
 import dataset
 
-
 class ProxyRequestHandler:
 
     def __init__(self, request, port=8000, static_dir="./static"):

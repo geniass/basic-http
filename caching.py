@@ -60,7 +60,7 @@ def save_in_cache(request, server_response, cache):
             to_save_in_cache = 0
 
         if last_mod_date + timedelta(minutes = 1) > expiry_date:
-            # If it expires within 10 minutes of modification, don't save
+            # If it expires within a minute of modification, don't save
             to_save_in_cache = 0
 
     if server_response.expires and server_response.expires == '-1':
@@ -68,6 +68,9 @@ def save_in_cache(request, server_response, cache):
         to_save_in_cache = 0
 
     if server_response.cache_control and (server_response.cache_control.find("no-cache") > -1):
+        to_save_in_cache = 0
+
+    if server_response.cache_control and (server_response.cache_control.find("no-store") > -1):
         to_save_in_cache = 0
 
     if to_save_in_cache == 1:

@@ -23,6 +23,7 @@ try:
     method = method.replace(' ', '')
 
     input_address = input("Please enter your desired web-address:\n")
+    port = 8000
 
     # Information post/put
     if method == 'POST' or method == 'PUT':
@@ -41,7 +42,7 @@ try:
     else:
         last_mod = datetime.strptime('01/01/1000', '%d/%m/%Y')
 
-    client = Client(input_address, 8000, proxy_addr, proxy_port, fetch_resources=True)
+    client = Client(input_address, port, proxy_addr, proxy_port, fetch_resources=True)
 
 except (TimeoutError, ConnectionRefusedError):
     sys.exit("\nCould not connect to desired proxy server. "
