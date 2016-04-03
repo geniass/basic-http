@@ -8,7 +8,7 @@ import dataset
 
 class ProxyRequestHandler:
 
-    def __init__(self, request, port=80, static_dir="./static"):
+    def __init__(self, request, port=8000, static_dir="./static"):
         self.request = request
         self.port = port
         self.static_dir = Path(static_dir).resolve()
@@ -51,18 +51,31 @@ class ProxyRequestHandler:
 
         elif request_status['status'] == "Found in cache. But no expiry or max-age. Make conditional get request":
             print(request_status['status'] + '\n\n')
+
+            # Make request again with if-modified-since header
             input_address = self.request.host + self.request.uri
 
-            print('***MAKING REQUEST FOR CLIENT...***\n')
+            self.request.if_mod_since = request_status['last_mod']
+            self.request.if_mod_since = datetime.strftime(self.request.if_mod_since, "%a, %d %b %Y %H:%M:%S GMT")
+            print('***MAKING CONDITIONAL GET...***\n')
             prox_client = Client(input_address, self.port, '', 0)
             self.response = prox_client.request(self.request)
-            caching.save_in_cache(request_key, self.response, cache)
+
+            # Check modification status
+            # If server says it hasn't been modified, return page in cache with "Not Modified" status
+            if self.response.status_code == 304:
+                self.response = HttpResponse.HttpResponse(request_status['page'])
+            # Else it has been modified, save the new response in the cache, if cache-able
+            else:
+                caching.save_in_cache(request_key, self.response, cache)
 
             return self.response
 
         else:
+            # It was found in the cache, and is fresh. Return this cached page
             print(request_status['status'] + '\n\n')
             self.response = HttpResponse.HttpResponse(request_status['page'])
+            # If the client manually made an if-mod-since request, let client know it's not modified
             if self.request.if_mod_since:
                 self.response.status_code = 304
                 self.response.reason = "Not Modified"

@@ -11,8 +11,9 @@ def check_if_cache_fresh(request, cache):
 
         # Found request in cache
         # If there's no expiry date, but there is a max-age, check that the cache is still fresh
-        if found['expiry'] == dummy_time and found['max_age'] != 0:
-            check = found['last_mod'] + timedelta(seconds = found['max_age'])
+        if found['expiry'] == dummy_time and int(found['max_age']) != 0:
+
+            check = found['last_mod'] + timedelta(seconds=found['max_age'])
             if user_date < check and user_date > found['last_mod']:
                 return dict(status = "Found in cache! Returning cached result.",page=found['page'])
             else:
@@ -21,9 +22,10 @@ def check_if_cache_fresh(request, cache):
                 return dict(status = "Outdated cache entry. Requesting again", page='',last_mod='')
 
         # Else if there's not an expiry header nor a max-age header, make conditional get
-        elif found['expiry'] == dummy_time and found['max_age'] == 0:
-            return dict(status = "Found in cache. But no expiry or max-age. Make conditional get request",page='',
-                        last_mod = found['last_mod'])
+        elif found['expiry'] == dummy_time and int(found['max_age']) == 0:
+            
+            return dict(status = "Found in cache. But no expiry or max-age. Make conditional get request",
+                        page=found['page'],last_mod = found['last_mod'])
 
         # Else if there is an expiry date, compare it to your date
         else:
@@ -76,7 +78,7 @@ def save_in_cache(request, server_response, cache):
             max_age = max_age[:max_age.find(',')]
         else:
             # Default age not specified by server.
-            max_age = 0
+            max_age = int(0)
 
         print('\nThis page can be cached. Saving cache now.\n')
         # Store in cache database
