@@ -109,7 +109,7 @@ We have created a demo program `main.py` in order to test the web browsing appli
     - Enter the address you would like to make the request to
     - The server's response will now be displayed 
   * Condtional Get request: 
-    - The get request above by default implements caching, however if you would like to specify a date for when you want to         check the modification against, use this request
+    - The get request above by default implements caching and the conditional get request where required, however, if you           would like to explicitly make a conditional get for testing purposes, use this request
     - Enter 'cond get' as your desired HTTP method (without the quotation marks)
     - Enter the address you would like to make the request to
     - Enter the date against which you would like to check if the page has been modified since
@@ -121,7 +121,7 @@ We have created a demo program `main.py` in order to test the web browsing appli
     - Enter the information you would like to post/put
     - The server's response will now be displayed
   * Delete request: 
-    - This request allows you to delete information in your desired web address
+    - This request allows you to delete information at your desired web address
     - Enter 'delete' as your desired HTTP method (without the quotation marks)
     - Enter the address you would like to delete information from
-    - The server's response to your delete request will not be displayed
+    - The server's response to your delete request will now be displayed
