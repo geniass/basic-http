@@ -13,6 +13,7 @@ Implemented:
 * GET, HEAD, POST, PUT, DELETE responses
 * Demo web pages (/index.html and /content.html)
 * Accessible by other hosts on the network
+* HTTP Basic Authorization
 
 Not yet implemented:
 * HTTP/1.1
@@ -43,6 +44,7 @@ Implemented:
 * Conditional GET
 * Download all images on page (by parsing HTML)
 * Redirection
+* HTTP Basic Authorization
 
 Not yet implemented:
 * HTTP/1.1
@@ -50,7 +52,14 @@ Not yet implemented:
 * GUI front-end
 
 ### How to use it
+1. `client = Client(address, 80, "localhost", 7000)` Replace address with the desired server's IP address or hostname
+2. Create a new request: `request = HttpRequest()`
+3. Set request headers, e.g.: `request.user_agent = "curl/7.40.0"`
+4. Send the request: `response = client.request(request)`
+5. Do something with the response: `print(response.status_code)`
 
+The client has optional arguments:
+* fetch_resources: if True, the response HTML will be parsed and all <img> tag images will be downloaded
 
 The client has been tested with the following websites:
 * [Loot](http://www.loot.co.za)
@@ -89,18 +98,19 @@ The server has optional arguments:
 ## Main
 We have created a demo program `main.py` in order to test the web browsing application
 ### How to use it 
-1. Run `python3 main.py`
-2. Input your desired proxy IP address
-3. Input the corresponding proxy port number
-4. If you would not like to connect to a proxy server, simply press enter (leaving it blank) when prompted for the proxy IP      address
-5. Making a request:
+1. If you would like to access the localhost, open `python3 main.py,` change the port number in line 26 to 8000, and open        `python3 ProxyRequestHandler.py,` change the port number in line 10 to 8000. For all other web-servers, change the same       two port numbers to 80.   
+2. Run `python3 main.py`
+3. Input your desired proxy IP address
+4. Input the corresponding proxy port number
+5. If you would not like to connect to a proxy server, simply press enter (leaving it blank) when prompted for the proxy IP      address
+6. Making a request:
   * Get request:
     - Use this request when you simply want to retrieve a webpage
     - Enter 'get' as your desired HTTP method (without the quotation marks)
     - Enter the address you would like to make the request to
     - The server's response will now be displayed 
   * Condtional Get request: 
-    - The get request above by default implements caching, however if you would like to specify a date for when you want to         check the modification against, use this request
+    - The get request above by default implements caching and the conditional get request where required, however, if you           would like to explicitly make a conditional get for testing purposes, use this request
     - Enter 'cond get' as your desired HTTP method (without the quotation marks)
     - Enter the address you would like to make the request to
     - Enter the date against which you would like to check if the page has been modified since
@@ -112,7 +122,7 @@ We have created a demo program `main.py` in order to test the web browsing appli
     - Enter the information you would like to post/put
     - The server's response will now be displayed
   * Delete request: 
-    - This request allows you to delete information in your desired web address
+    - This request allows you to delete information at your desired web address
     - Enter 'delete' as your desired HTTP method (without the quotation marks)
     - Enter the address you would like to delete information from
-    - The server's response to your delete request will not be displayed
+    - The server's response to your delete request will now be displayed
