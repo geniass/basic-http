@@ -9,7 +9,8 @@ from BasicAuth import encode_auth_string
 
 def adjust_address(address):
     if address.startswith("https://"):
-        sys.exit("\nUnfortunately this client cannot connect to secure servers. Goodbye!")
+        sys.exit(
+            "\nUnfortunately this client cannot connect to secure servers. Goodbye!")
 
     if address.startswith("http://"):
         address = address[7:]
@@ -39,25 +40,25 @@ def get_relative_url(url):
 
 
 def get_proxy_compat_url(host, url, proxy_address):
-        if proxy_address:
-            return "http://" + adjust_address(host) + url
-        else:
-            return url
+    if proxy_address:
+        return "http://" + adjust_address(host) + url
+    else:
+        return url
 
 
 class Client:
 
-    def __init__(self, address, port, proxy_address, proxy_port, fetch_resources=False):
+    def __init__(self, address, port, proxy_address, proxy_port, fetch_resources=False, allow_persistent=True):
         self.host = get_host(adjust_address(address))
         self.url = get_relative_url(adjust_address(address))
         self.port = port
         self.proxy_address = proxy_address
         self.proxy_port = proxy_port
         self.fetch_resources = fetch_resources
-
-        self.allow_persistent = True
+        self.allow_persistent = allow_persistent
         if "wits.ac.za" in address and not proxy_address:
-            print("You are trying to access wits.ac.za. Persistent connections are not available")
+            print(
+                "You are trying to access wits.ac.za. Persistent connections are not available")
             self.allow_persistent = False
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -86,7 +87,7 @@ class Client:
             req.host = host
             req.uri = get_proxy_compat_url(host, url, self.proxy_address)
             req.method = request.method
-            request.connection = "keep-alive" if self.allow_persistent else "close"
+            req.connection = "keep-alive" if self.allow_persistent else "close"
             # TODO: HttpRequest copy constructor
 
             if response.connection == "close" or not self.allow_persistent:
@@ -121,7 +122,8 @@ class Client:
 
     def request(self, request):
         request.host = self.host
-        request.uri = get_proxy_compat_url(self.host, self.url, self.proxy_address)
+        request.uri = get_proxy_compat_url(
+            self.host, self.url, self.proxy_address)
 
         response = self.request_and_redirect(request)
         if response.location:
@@ -130,7 +132,8 @@ class Client:
         if response.status_code == 401 and response.www_auth:
             # need to send authentication
             request.host = self.host
-            request.authorization = encode_auth_string("ThePunisher", "stayD0wn")
+            request.authorization = encode_auth_string(
+                "ThePunisher", "stayD0wn")
             print(request.authorization)
             response = self.request_and_redirect(request)
 
@@ -138,7 +141,8 @@ class Client:
             if response.connection == "close" or not self.allow_persistent:
                 self.reset_connection()
             parser = ResourceHTMLParser()
-            resources = parser.extract_resource_urls(str(response.content, "ISO-8859-1"))
+            resources = parser.extract_resource_urls(
+                str(response.content, "ISO-8859-1"))
             print("RESOURCES", resources)
             self.save_all_resources(resources)
 

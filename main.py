@@ -23,7 +23,7 @@ try:
     method = method.replace(' ', '')
 
     input_address = input("Please enter your desired web-address:\n")
-    port = 8000
+    port = 80
 
     # Information post/put
     if method == 'POST' or method == 'PUT':

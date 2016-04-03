@@ -7,7 +7,7 @@ import dataset
 
 class ProxyRequestHandler:
 
-    def __init__(self, request, port=8000, static_dir="./static"):
+    def __init__(self, request, port=80, static_dir="./static"):
         self.request = request
         self.port = port
         self.static_dir = Path(static_dir).resolve()

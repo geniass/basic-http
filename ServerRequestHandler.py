@@ -65,6 +65,7 @@ class ServerRequestHandler:
                 self.response.status_code = 304
                 self.response.reason = "Not modified"
         else:
+            print("not found")
             self.response.status_code = 404
             self.response.reason = "Not found"
             self.response.content = (self.static_dir / "404.html").open(mode="rb").read()
